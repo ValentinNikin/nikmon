@@ -1,0 +1,48 @@
+cmake_minimum_required(VERSION 3.2 FATAL_ERROR)
+project(otus-cpp-hw-12)
+
+option(BUILD_TESTS "Build unit-tests" OFF)
+
+set(PATCH_VERSION "1" CACHE INTERNAL "Patch version")
+
+set(MAJOR_VERSION 0)
+set(MINOR_VERSION 0)
+set(BUILD_VERSION ${PATCH_VERSION})
+
+set(CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake)
+
+include(ProjectDependencies)
+include(CompilerOptions)
+
+add_subdirectory(src)
+
+include(Packaging)
+
+message(STATUS "-----------------------------------------------------------------------------")
+message(STATUS "")
+message(STATUS "Enviroment:")
+message(STATUS "    SYSTEM:            ${CMAKE_SYSTEM_NAME}")
+message(STATUS "    VERSION:           ${CMAKE_SYSTEM_VERSION}")
+message(STATUS "")
+message(STATUS "Compiler:")
+message(STATUS "    C   VERSION:       ${CMAKE_C_COMPILER_VERSION}")
+message(STATUS "    C++ VERSION:       ${CMAKE_CXX_COMPILER_VERSION}")
+message(STATUS "    C   FLAGS:         ${CMAKE_C_FLAGS}")
+message(STATUS "    C++ FLAGS:         ${CMAKE_CXX_FLAGS}")
+message(STATUS "    C   FLAGS RELEASE: ${CMAKE_C_FLAGS_RELEASE}")
+message(STATUS "    C++ FLAGS RELEASE: ${CMAKE_CXX_FLAGS_RELEASE}")
+message(STATUS "    C   FLAGS DEBUG:   ${CMAKE_C_FLAGS_DEBUG}")
+message(STATUS "    C++ FLAGS DEBUG:   ${CMAKE_CXX_FLAGS_DEBUG}")
+message(STATUS "    LINK_OPTIONS:      ${LINK_OPTIONS} ")
+message(STATUS "")
+message(STATUS "BUILD:")
+message(STATUS "    TYPE:              ${CMAKE_BUILD_TYPE}")
+message(STATUS "")
+message(STATUS "OPTIONS:")
+message(STATUS "    BUILD_TESTS:              ${BUILD_TESTS}")
+message(STATUS "")
+message(STATUS "DEPENDENCIES:")
+message(STATUS "    PROJECT_DEPS_INCLUDES:   ${PROJECT_DEPS_INCLUDES}")
+message(STATUS "    PROJECT_DEPS:   ${PROJECT_DEPS}")
+message(STATUS "-----------------------------------------------------------------------------")
+message(STATUS "")
