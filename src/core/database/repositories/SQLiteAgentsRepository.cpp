@@ -6,13 +6,6 @@ SQLiteAgentsRepository::SQLiteAgentsRepository(
         const std::string& tableName, const Poco::Data::Session& session)
         : _tableName(tableName), _session(session) {}
 
-void SQLiteAgentsRepository::createTable() {
-    Poco::Data::Statement statement =
-            (_session << "CREATE TABLE %s ([Id] blob NOT NULL PRIMARY KEY, [MachineName] nvarchar NOT NULL, [Ip] nvarchar NOT NULL, [Heartbeat] int NOT NULL, [Info] text)",
-                    _tableName);
-    statement.execute();
-}
-
 std::vector<std::unique_ptr<AgentDB>> SQLiteAgentsRepository::list() {
     std::vector<std::unique_ptr<AgentDB>> agents;
 
@@ -20,7 +13,7 @@ std::vector<std::unique_ptr<AgentDB>> SQLiteAgentsRepository::list() {
 
     Poco::Data::Statement statement =
             (_session << "SELECT Id, MachineName, Ip, Heartbeat, Info FROM %s",
-                    into(agent.id), into(agent.machineName), into(agent.ip), into(agent.heartbeat), into(agent.info), _tableName);
+                    into(agent.id), into(agent.machineName), into(agent.ip), into(agent.heartbeat), into(agent.info), _tableName, range(0, 1));
 
     while (!statement.done() && statement.execute()) {
         agents.push_back(std::make_unique<AgentDB>(agent));
@@ -81,7 +74,7 @@ std::vector<std::unique_ptr<AgentDB>> SQLiteAgentsRepository::getByIpAndMachineN
     Poco::Data::Statement statement =
             (_session << "SELECT Id, MachineName, Ip, Heartbeat, Info FROM %s WHERE MachineName = ? AND Ip = ?",
                     into(agent.id), into(agent.machineName), into(agent.ip), into(agent.heartbeat), into(agent.info), _tableName,
-                    use(machineName_), use(ip_));
+                    use(machineName_), use(ip_), range(0, 1));
 
     while (!statement.done() && statement.execute()) {
         agents.push_back(std::make_unique<AgentDB>(agent));

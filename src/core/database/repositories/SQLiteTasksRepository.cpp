@@ -6,27 +6,19 @@ SQLiteTasksRepository::SQLiteTasksRepository(
         const std::string& tableName, const Poco::Data::Session& session)
         : _tableName(tableName), _session(session) {}
 
-void SQLiteTasksRepository::createTable() {
-    Poco::Data::Statement statement =
-            (_session << "CREATE TABLE %s ([Id] blob NOT NULL PRIMARY KEY, [AgentId] blob NOT NULL, "
-                         "[Frequency] int NOT NULL, [Delay] int, [Key] nvarchar NOT NULL, [Type] int NOT NULL, "
-                         "FOREIGN KEY (AgentId) REFERENCES Agents(Id))",
-                    _tableName);
-    statement.execute();
-}
-
 std::vector<std::unique_ptr<TaskDB>> SQLiteTasksRepository::list(const std::string& agentId) {
     std::vector<std::unique_ptr<TaskDB>> tasks;
 
     TaskDB task;
 
+    std::string agentId_ = agentId;
     int frequency;
     int valueType;
 
     Poco::Data::Statement statement =
             (_session << "SELECT Id, AgentId, Frequency, Delay, Key, Type FROM %s WHERE AgentId = ?",
                     into(task.id), into(task.agentId), into(frequency), into(task.delay), into(task.key), into(valueType),
-                    _tableName, agentId);
+                    _tableName, use(agentId_));
 
     while (!statement.done() && statement.execute()) {
         task.frequency = static_cast<TaskFrequency>(frequency);

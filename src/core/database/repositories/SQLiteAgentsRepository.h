@@ -8,8 +8,6 @@ class SQLiteAgentsRepository : public IAgentsRepository {
 public:
     SQLiteAgentsRepository(const std::string& tableName, const Poco::Data::Session& session);
 
-    void createTable() override;
-
     std::vector<std::unique_ptr<AgentDB>> list() override;
     bool insert(AgentDB& agent) override;
     std::unique_ptr<AgentDB> get(const std::string& agentId) override;

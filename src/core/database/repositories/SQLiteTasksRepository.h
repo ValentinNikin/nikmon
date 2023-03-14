@@ -8,8 +8,6 @@ class SQLiteTasksRepository : public ITasksRepository {
 public:
     SQLiteTasksRepository(const std::string& tableName, const Poco::Data::Session& session);
 
-    void createTable() override;
-
     std::vector<std::unique_ptr<TaskDB>> list(const std::string& agentId) override;
     bool insert(TaskDB& task) override;
     std::unique_ptr<TaskDB> get(const std::string& taskId) override;

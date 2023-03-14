@@ -48,13 +48,24 @@ add_library(
         types/enums/TaskValueType.h
 
         core/database/types/AgentDB.h
+        core/database/types/TaskDB.h
+        core/database/types/TaskItemDB.h
+        core/database/types/TaskItemErrorDB.h
 
         core/database/repositories/IAgentsRepository.h
         core/database/repositories/SQLiteAgentsRepository.h
         core/database/repositories/SQLiteAgentsRepository.cpp
+
         core/database/repositories/ITasksRepository.h
         core/database/repositories/SQLiteTasksRepository.h
         core/database/repositories/SQLiteTasksRepository.cpp
+
+        core/database/repositories/ITasksItemsRepository.h
+        core/database/repositories/SQLiteTasksItemsRepository.h
+
+        core/database/repositories/ITasksItemsErrorsRepository.h
+        core/database/repositories/SQLiteTasksItemsErrorsRepository.h
+        core/database/repositories/SQLiteTasksItemsErrorsRepository.cpp
         )
 
 set_target_properties(

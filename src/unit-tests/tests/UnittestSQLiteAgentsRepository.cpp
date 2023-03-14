@@ -3,20 +3,20 @@
 #include <Poco/Data/SQLite/Connector.h>
 #include <Poco/Data/Session.h>
 
+#include "unit-tests/Config.h"
+#include "unit-tests/Utils.h"
+
 #include "core/database/repositories/SQLiteAgentsRepository.h"
 
 TEST(SQLiteAgentsRepository, common) {
-    auto dbPath = "test-nikmon.db";
+    auto originalDbPath = Config::getInstance()->getResourcesPath() + "/empty-database.db";
+    auto dbPath = TestsUtils::makeCopy(originalDbPath);
 
     try {
         Poco::Data::SQLite::Connector::registerConnector();
         Poco::Data::Session session("SQLite", dbPath);
 
         auto agentsRepository = std::make_unique<SQLiteAgentsRepository>("Agents", session);
-
-        {
-            ASSERT_NO_THROW(agentsRepository->createTable());
-        }
 
         {
             auto agents = agentsRepository->list();
@@ -101,10 +101,13 @@ TEST(SQLiteAgentsRepository, common) {
 
         {
             ASSERT_TRUE(agentsRepository->remove("0f1ca827-2f4c-48b9-9c73-1baaa6ebd1c9"));
-            ASSERT_EQ(agentsRepository->list().size(), 2);
+            ASSERT_EQ(agentsRepository->list().size(), 1);
         }
     }
-    catch (...) {}
+    catch (const std::exception& exception) {
+        std::cout << "Exception occurred: " << exception.what() << std::endl;
+        ASSERT_TRUE(false);
+    }
 
-    std::remove(dbPath);
+    std::remove(dbPath.c_str());
 }

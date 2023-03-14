@@ -9,8 +9,6 @@ class IAgentsRepository {
 public:
     virtual ~IAgentsRepository() = default;
 
-    virtual void createTable() = 0;
-
     virtual std::vector<std::unique_ptr<AgentDB>> list() = 0;
     virtual bool insert(AgentDB&) = 0;
     virtual std::unique_ptr<AgentDB> get(const std::string& agentId) = 0;

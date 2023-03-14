@@ -3,10 +3,12 @@
 #include <string>
 
 #include "types/enums/TaskFrequency.h"
+#include "types/enums/TaskValueType.h"
 
 struct Task {
-    int id;
+    std::string id;
     TaskFrequency frequency;
     int delay;
     std::string key;
+    TaskValueType valueType;
 };
