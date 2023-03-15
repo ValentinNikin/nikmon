@@ -5,8 +5,8 @@
 #include "core/IAgentsManager.h"
 #include "core/IAgentCommunicator.h"
 #include "core/WorkflowManager.h"
-#include "core/IDatabaseManager.h"
-#include "core/SQLiteDatabaseManager.h"
+#include "core/database/IDatabaseManager.h"
+#include "core/database/SQLiteDatabaseManager.h"
 
 std::unique_ptr<ServiceLocator> ServiceLocator::_instance = nullptr;
 

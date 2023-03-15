@@ -2,7 +2,7 @@
 
 #include <Poco/Data/Session.h>
 
-#include "ITasksItemsRepository.h"
+#include "core/database/repositories/ITasksItemsRepository.h"
 
 template<typename ValueType>
 class SQLiteTasksItemsRepository : public ITasksItemsRepository<ValueType> {

@@ -2,9 +2,11 @@
 
 #include "Controller.h"
 
+#include "core/IAgentsManager.h"
+
 class AgentsController : public Controller {
 public:
-    AgentsController();
+    AgentsController(const std::shared_ptr<IAgentsManager>& agentsManager);
 private:
     void getAgentsList(Poco::Net::HTTPServerRequest& request, Poco::Net::HTTPServerResponse& response);
     void getAgent(Poco::Net::HTTPServerRequest& request, Poco::Net::HTTPServerResponse& response);
@@ -13,4 +15,6 @@ private:
     void deleteAgent(Poco::Net::HTTPServerRequest& request, Poco::Net::HTTPServerResponse& response);
     void getAssignedTasks(Poco::Net::HTTPServerRequest& request, Poco::Net::HTTPServerResponse& response);
     void assignTask(Poco::Net::HTTPServerRequest& request, Poco::Net::HTTPServerResponse& response);
+private:
+    std::shared_ptr<IAgentsManager> _agentsManager;
 };

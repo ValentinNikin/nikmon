@@ -5,7 +5,15 @@
 
 #include "app/ServiceLocator.h"
 
-AgentsController::AgentsController() {
+#include "utils/Utils.h"
+
+#include "types/EditTask.h"
+
+using namespace nikmon::types;
+
+AgentsController::AgentsController(
+        const std::shared_ptr<IAgentsManager>& agentsManager)
+        : _agentsManager(agentsManager) {
     REGISTER_ENDPOINT(Poco::Net::HTTPRequest::HTTP_GET, "/api/agents", getAgentsList)
     REGISTER_ENDPOINT(Poco::Net::HTTPRequest::HTTP_POST, "/api/agents", createAgent)
     REGISTER_ENDPOINT(Poco::Net::HTTPRequest::HTTP_PUT, "/api/agents", editAgent)
@@ -64,7 +72,16 @@ void AgentsController::getAssignedTasks(Poco::Net::HTTPServerRequest& request, P
 }
 
 void AgentsController::assignTask(Poco::Net::HTTPServerRequest& request, Poco::Net::HTTPServerResponse& response) {
-    (void)request;
+
+    auto uriSplitted = nikmon::stringUtils::split(request.getURI(), '/');
+    auto agentId = uriSplitted[2];
+
+    auto payload = readPayloadFromRequest(request);
+
+    EditTask editTask;
+    from_json(payload, editTask);
+
+    _agentsManager->assignTask(agentId, editTask);
 
     handleHttpStatusCode(200, response);
     std::ostream& errorStream = response.send();

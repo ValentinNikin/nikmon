@@ -4,10 +4,10 @@
 #include <Poco/Data/Session.h>
 #include <Poco/File.h>
 
-#include "database/repositories/SQLiteAgentsRepository.h"
-#include "database/repositories/SQLiteTasksRepository.h"
-#include "database/repositories/SQLiteTasksItemsRepository.h"
-#include "database/repositories/SQLiteTasksItemsErrorsRepository.h"
+#include "core/database/repositories/sqlite/SQLiteAgentsRepository.h"
+#include "core/database/repositories/sqlite/SQLiteTasksRepository.h"
+#include "core/database/repositories/sqlite/SQLiteTasksItemsRepository.h"
+#include "core/database/repositories/sqlite/SQLiteTasksItemsErrorsRepository.h"
 
 using namespace Poco::Data::Keywords;
 
@@ -85,4 +85,16 @@ void SQLiteDatabaseManager::saveTaskItem(const TaskItemDB<std::string>& taskItem
 
 void SQLiteDatabaseManager::saveTaskItemError(const TaskItemErrorDB& taskItemError) {
     _tasksItemsErrorsRepository->insert(const_cast<TaskItemErrorDB&>(taskItemError));
+}
+
+void SQLiteDatabaseManager::saveTask(const nikmon::types::Task& task) {
+    TaskDB taskDb;
+    taskDb.id = task.id;
+    taskDb.agentId = task.agentId;
+    taskDb.frequency = task.frequency;
+    taskDb.delay = task.delay;
+    taskDb.key = task.key;
+    taskDb.valueType = task.valueType;
+
+    _tasksRepository->insert(taskDb);
 }

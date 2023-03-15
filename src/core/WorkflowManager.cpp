@@ -2,23 +2,42 @@
 
 #include <algorithm>
 
+#include "types/Task.h"
+#include "types/enums/TaskStatus.h"
+#include "types/enums/CommandType.h"
+
+using Task = nikmon::types::Task;
+
 WorkflowManager::WorkflowManager(
         const std::shared_ptr<IDatabaseManager>& databaseManager)
         : _databaseManager(databaseManager) {}
 
-RegistrationResponse WorkflowManager::registerAgent(const RegistrationRequest& registrationRequest) {
-    RegistrationResponse registrationResponse;
+nikmon::types::RegistrationResponse WorkflowManager::registerAgent(const RegistrationRequest& registrationRequest) {
+    std::shared_ptr<Agent> agent;
+    {
+        std::lock_guard<std::mutex> lg(_agentsListMutex);
+        auto activeAgentIt = std::find_if(_agents.cbegin(), _agents.cend(), [&registrationRequest](const auto &agent) {
+            return agent->machineName == registrationRequest.machineName && agent->ip == registrationRequest.ip;
+        });
 
-    auto activeAgentIt = std::find_if(_agents.cbegin(), _agents.cend(), [&registrationRequest](const auto& agent) {
-        return agent->machineName == registrationRequest.machineName && agent->ip == registrationRequest.ip;
-    });
+        if (activeAgentIt != _agents.cend()) {
+            agent = *activeAgentIt;
+        }
+    }
 
-    if (activeAgentIt != _agents.cend()) {
-        registrationResponse.id = activeAgentIt->get()->id;
-        registrationResponse.heartbeat = activeAgentIt->get()->heartbeat;
-        // TODO: clear agent state
+    if (agent != nullptr) {
+        // clear agent state
+        {
+            std::lock_guard<std::mutex> lg(agent->tasksMutex);
+            agent->tasks.clear();
+        }
+        {
+            std::lock_guard<std::mutex> lg(agent->waitableCommandsMutex);
+            agent->waitableCommands.clear();
+        }
     }
     else {
+        // extract agent configuration from database and add to collection
         auto existAgents = _databaseManager->getAgentsByIpAndMachineName(
                 registrationRequest.ip, registrationRequest.machineName);
         if (existAgents.empty()) {
@@ -29,42 +48,51 @@ RegistrationResponse WorkflowManager::registerAgent(const RegistrationRequest& r
             // TODO: print something to log, this is wrong situation
         }
 
-        registrationResponse.id = existAgents[0]->id;
-        registrationResponse.heartbeat = existAgents[0]->heartbeat;
-
-        std::lock_guard<std::mutex> lg(_mutex);
-        _agents.push_back(std::make_unique<Agent>(existAgents[0].get()));
+        agent = std::make_shared<Agent>(existAgents[0].get());
+        std::lock_guard<std::mutex> lg(_agentsListMutex);
+        _agents.push_back(agent);
     }
+
+    RegistrationResponse registrationResponse;
+
+    registrationResponse.id = agent->id;
+    registrationResponse.heartbeat = agent->heartbeat;
 
     return registrationResponse;
 }
 
-StatusResponse WorkflowManager::statusAgent(const StatusRequest& statusRequest) {
-    StatusResponse statusResponse;
-
-    auto agentIt = std::find_if(_agents.cbegin(), _agents.cend(), [&statusRequest](const auto& agent) {
-        return agent->id == statusRequest.id;
-    });
-
-    if (agentIt == _agents.cend()) {
-        throw std::runtime_error("Agent is not registered");
-    }
-
-    auto agent = agentIt->get();
-
-    // process commands confirmations
-    for (const auto& c : statusRequest.confirmations) {
-        auto agentWaitableCommandIt = std::find_if(agent->waitableCommands.cbegin(), agent->waitableCommands.cend(),
-                                                 [&c](const auto& wc) {
-            return wc->taskId == c.taskId && wc->type == c.type;
+nikmon::types::StatusResponse WorkflowManager::statusAgent(const StatusRequest& statusRequest) {
+    std::shared_ptr<Agent> agent;
+    {
+        std::lock_guard<std::mutex> lg(_agentsListMutex);
+        auto agentIt = std::find_if(_agents.cbegin(), _agents.cend(), [id = statusRequest.id](const auto &agent) {
+            return agent->id == id;
         });
 
-        if (agentWaitableCommandIt == agent->waitableCommands.cend()) {
-            // TODO: print something to log
-            continue;
+        if (agentIt == _agents.cend()) {
+            throw std::runtime_error("Agent is not registered");
         }
 
-        agent->waitableCommands.erase(agentWaitableCommandIt);
+        agent = *agentIt;
+    }
+
+    // process commands confirmations
+    {
+        std::lock_guard<std::mutex> lg(agent->waitableCommandsMutex);
+        for (const auto &c: statusRequest.confirmations) {
+            auto agentWaitableCommandIt = std::find_if(
+                    agent->waitableCommands.cbegin(), agent->waitableCommands.cend(),
+                    [&c](const auto &wc) {
+                        return wc->taskId == c.taskId && wc->type == c.type;
+                    });
+
+            if (agentWaitableCommandIt == agent->waitableCommands.cend()) {
+                // TODO: print something to log
+                continue;
+            }
+
+            agent->waitableCommands.erase(agentWaitableCommandIt);
+        }
     }
 
     // process tasks items
@@ -78,17 +106,22 @@ StatusResponse WorkflowManager::statusAgent(const StatusRequest& statusRequest) 
             continue;
         }
 
-        auto taskIt = std::find_if(agent->activeTasks.cbegin(), agent->activeTasks.cend(),
-                                   [&ti](const auto& task) {
-            return task->id == ti.id;
-        });
+        TaskValueType taskValueType;
+        {
+            std::lock_guard<std::mutex> lg(agent->tasksMutex);
+            auto taskIt = std::find_if(agent->tasks.cbegin(), agent->tasks.cend(),
+                                       [&ti](const auto &task) {
+                                           return task->id == ti.id;
+                                       });
 
-        if (taskIt == agent->activeTasks.cend()) {
-            // TODO: print something to log
-            continue;
+            if (taskIt == agent->tasks.cend()) {
+                // TODO: print something to log
+                continue;
+            }
+
+            taskValueType = (*taskIt)->valueType;
         }
 
-        auto taskValueType = (*taskIt)->valueType;
         if (taskValueType == TaskValueType::uintType) {
             TaskItemDB<uint> tiDB;
             tiDB.taskId = ti.id;
@@ -112,5 +145,51 @@ StatusResponse WorkflowManager::statusAgent(const StatusRequest& statusRequest) 
         }
     }
 
+    StatusResponse statusResponse;
+
+    statusResponse.heartbeat = agent->heartbeat;
+    {
+        std::lock_guard<std::mutex> lg(agent->waitableCommandsMutex);
+        statusResponse.commands = agent->waitableCommands;
+    }
+
     return statusResponse;
+}
+
+void WorkflowManager::assignTask(const std::string& agentId, const EditTask& newTask) {
+    std::shared_ptr<Agent> agent;
+    {
+        std::lock_guard<std::mutex> lg(_agentsListMutex);
+        auto agentIt = std::find_if(_agents.cbegin(), _agents.cend(), [&agentId](const auto &agent) {
+            return agent->id == agentId;
+        });
+
+        if (agentIt == _agents.cend()) {
+            throw std::runtime_error("Agent is not registered");
+        }
+
+        agent = *agentIt;
+    }
+
+    auto task = std::make_shared<Task>(newTask);
+    task->agentId = agent->id;
+
+    {
+        auto command = std::make_shared<nikmon::types::Command>();
+        command->taskId = task->id;
+        command->type = CommandType::Add;
+        command->payload.key = task->key;
+        command->payload.delay = task->delay;
+        command->payload.frequency = task->frequency;
+
+        std::lock_guard<std::mutex> lg(agent->waitableCommandsMutex);
+        agent->waitableCommands.push_back(command);
+    }
+
+    {
+        std::lock_guard<std::mutex> lg(agent->tasksMutex);
+        agent->tasks.push_back(task);
+    }
+
+    _databaseManager->saveTask(*task);
 }

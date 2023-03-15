@@ -6,6 +6,7 @@
 #include "core/database/types/AgentDB.h"
 #include "core/database/types/TaskItemDB.h"
 #include "core/database/types/TaskItemErrorDB.h"
+#include "types/Task.h"
 
 class IDatabaseManager {
 public:
@@ -20,4 +21,7 @@ public:
     virtual void saveTaskItem(const TaskItemDB<float>&) = 0;
     virtual void saveTaskItem(const TaskItemDB<std::string>&) = 0;
     virtual void saveTaskItemError(const TaskItemErrorDB&) = 0;
+
+    /// Tasks
+    virtual void saveTask(const nikmon::types::Task&) = 0;
 };

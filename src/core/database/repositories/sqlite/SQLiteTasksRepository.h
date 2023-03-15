@@ -2,7 +2,7 @@
 
 #include <Poco/Data/Session.h>
 
-#include "ITasksRepository.h"
+#include "core/database/repositories/ITasksRepository.h"
 
 class SQLiteTasksRepository : public ITasksRepository {
 public:

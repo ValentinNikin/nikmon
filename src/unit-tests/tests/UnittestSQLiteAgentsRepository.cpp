@@ -6,7 +6,7 @@
 #include "unit-tests/Config.h"
 #include "unit-tests/Utils.h"
 
-#include "core/database/repositories/SQLiteAgentsRepository.h"
+#include "core/database/repositories/sqlite/SQLiteAgentsRepository.h"
 
 TEST(SQLiteAgentsRepository, common) {
     auto originalDbPath = Config::getInstance()->getResourcesPath() + "/empty-database.db";

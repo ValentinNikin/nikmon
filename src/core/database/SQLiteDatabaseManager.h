@@ -17,6 +17,8 @@ public:
     void saveTaskItem(const TaskItemDB<float>& taskItem) override;
     void saveTaskItem(const TaskItemDB<std::string>& taskItem) override;
     void saveTaskItemError(const TaskItemErrorDB& taskItemError) override;
+
+    void saveTask(const nikmon::types::Task& task) override;
 private:
     std::unique_ptr<IAgentsRepository> _agentsRepository;
     std::unique_ptr<ITasksRepository> _tasksRepository;

@@ -2,7 +2,7 @@
 
 #include <Poco/Data/Session.h>
 
-#include "ITasksItemsErrorsRepository.h"
+#include "core/database/repositories/ITasksItemsErrorsRepository.h"
 
 class SQLiteTasksItemsErrorsRepository : public ITasksItemsErrorsRepository {
 public:

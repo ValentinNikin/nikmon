@@ -6,7 +6,7 @@
 #include "Config.h"
 #include "Utils.h"
 
-#include "core/database/repositories/SQLiteTasksItemsRepository.h"
+#include "core/database/repositories/sqlite/SQLiteTasksItemsRepository.h"
 
 TEST(SQLiteTasksItemsRepository, uint) {
     auto originalDbPath = Config::getInstance()->getResourcesPath() + "/empty-database.db";

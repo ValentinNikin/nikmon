@@ -2,7 +2,7 @@
 
 #include <Poco/Data/Session.h>
 
-#include "IAgentsRepository.h"
+#include "core/database/repositories/IAgentsRepository.h"
 
 class SQLiteAgentsRepository : public IAgentsRepository {
 public:

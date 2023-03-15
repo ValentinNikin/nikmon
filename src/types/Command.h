@@ -8,6 +8,9 @@
 #include "types/enums/CommandType.h"
 #include "types/enums/TaskFrequency.h"
 
+namespace nikmon {
+namespace types {
+
 struct Payload {
     TaskFrequency frequency;
     long int delay;
@@ -22,5 +25,9 @@ struct Command {
     Payload payload;
 };
 
-void to_json(nlohmann::json& j, const  Command& c);
-void from_json(const nlohmann::json& j, Command& c);
+void to_json(nlohmann::json &j, const Command &c);
+
+void from_json(const nlohmann::json &j, Command &c);
+
+}
+}

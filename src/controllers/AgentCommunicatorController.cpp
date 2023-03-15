@@ -6,6 +6,10 @@
 #include <Poco/Net/HTTPServerResponse.h>
 
 #include "types/RegistrationRequest.h"
+#include "types/RegistrationResponse.h"
+#include "types/StatusResponse.h"
+
+using namespace nikmon::types;
 
 AgentCommunicatorController::AgentCommunicatorController(
         const std::shared_ptr<IAgentCommunicator>& agentCommunicator)
@@ -42,7 +46,7 @@ void AgentCommunicatorController::statusAgent(Poco::Net::HTTPServerRequest& requ
         auto payload = readPayloadFromRequest(request);
 
         StatusRequest statusRequest;
-        from_json(request, statusRequest);
+        from_json(payload, statusRequest);
 
         auto statusResponse = _agentCommunicator->statusAgent(statusRequest);
         nlohmann::json responseJson;

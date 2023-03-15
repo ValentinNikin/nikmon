@@ -6,9 +6,15 @@
 
 #include "Command.h"
 
-class StatusResponse {
-    int heartbeat;
-    std::vector<Command> commands;
+namespace nikmon {
+namespace types {
 
-    NLOHMANN_DEFINE_TYPE_INTRUSIVE(StatusResponse, heartbeat, commands);
+struct StatusResponse {
+    int heartbeat;
+    std::vector<std::shared_ptr<Command>> commands;
 };
+
+void to_json(nlohmann::json &j, const StatusResponse &response);
+
+}
+}

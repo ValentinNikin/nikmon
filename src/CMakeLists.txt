@@ -26,11 +26,11 @@ add_library(
 
         core/IAgentsManager.h
         core/IAgentCommunicator.h
-        core/IDatabaseManager.h
+        core/database/IDatabaseManager.h
         core/WorkflowManager.h
         core/WorkflowManager.cpp
-        core/SQLiteDatabaseManager.h
-        core/SQLiteDatabaseManager.cpp
+        core/database/SQLiteDatabaseManager.h
+        core/database/SQLiteDatabaseManager.cpp
 
         types/Command.h
         types/Command.cpp
@@ -39,6 +39,7 @@ add_library(
         types/RegistrationResponse.h
         types/StatusRequest.h
         types/StatusResponse.h
+        types/StatusResponse.cpp
         types/TaskItem.h
         types/enums/AgentStatus.h
         types/enums/CommandType.h
@@ -53,19 +54,22 @@ add_library(
         core/database/types/TaskItemErrorDB.h
 
         core/database/repositories/IAgentsRepository.h
-        core/database/repositories/SQLiteAgentsRepository.h
-        core/database/repositories/SQLiteAgentsRepository.cpp
+        core/database/repositories/sqlite/SQLiteAgentsRepository.h
+        core/database/repositories/sqlite/SQLiteAgentsRepository.cpp
 
         core/database/repositories/ITasksRepository.h
-        core/database/repositories/SQLiteTasksRepository.h
-        core/database/repositories/SQLiteTasksRepository.cpp
+        core/database/repositories/sqlite/SQLiteTasksRepository.h
+        core/database/repositories/sqlite/SQLiteTasksRepository.cpp
 
         core/database/repositories/ITasksItemsRepository.h
-        core/database/repositories/SQLiteTasksItemsRepository.h
+        core/database/repositories/sqlite/SQLiteTasksItemsRepository.h
 
         core/database/repositories/ITasksItemsErrorsRepository.h
-        core/database/repositories/SQLiteTasksItemsErrorsRepository.h
-        core/database/repositories/SQLiteTasksItemsErrorsRepository.cpp
+        core/database/repositories/sqlite/SQLiteTasksItemsErrorsRepository.h
+        core/database/repositories/sqlite/SQLiteTasksItemsErrorsRepository.cpp
+
+        utils/Utils.h
+        utils/Utils.cpp
         )
 
 set_target_properties(

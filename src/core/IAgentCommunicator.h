@@ -6,6 +6,11 @@
 #include "types/StatusResponse.h"
 
 class IAgentCommunicator {
+protected:
+    using RegistrationResponse = nikmon::types::RegistrationResponse;
+    using RegistrationRequest = nikmon::types::RegistrationRequest;
+    using StatusResponse = nikmon::types::StatusResponse;
+    using StatusRequest = nikmon::types::StatusRequest;
 public:
     virtual ~IAgentCommunicator() = default;
 
