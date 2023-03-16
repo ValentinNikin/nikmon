@@ -31,6 +31,7 @@ TEST(SQLiteTasksRepository, common) {
             task.delay = 1000;
             task.key = "System.Proc.Util";
             task.valueType = TaskValueType::uintType;
+            task.status = TaskStatus::Stopped;
             ASSERT_TRUE(tasksRepository->insert(task));
         }
 
@@ -41,6 +42,7 @@ TEST(SQLiteTasksRepository, common) {
             task.frequency = TaskFrequency::OnceTime;
             task.key = "System.MachineInfo";
             task.valueType = TaskValueType::textType;
+            task.status = TaskStatus::Active;
             ASSERT_TRUE(tasksRepository->insert(task));
         }
 
@@ -56,6 +58,7 @@ TEST(SQLiteTasksRepository, common) {
                 ASSERT_EQ(task->delay, 1000);
                 ASSERT_EQ(task->key, "System.Proc.Util");
                 ASSERT_EQ(task->valueType, TaskValueType::uintType);
+                ASSERT_EQ(task->status, TaskStatus::Stopped);
             }
         }
 
@@ -66,6 +69,7 @@ TEST(SQLiteTasksRepository, common) {
             ASSERT_EQ(task->frequency, TaskFrequency::OnceTime);
             ASSERT_EQ(task->key, "System.MachineInfo");
             ASSERT_EQ(task->valueType, TaskValueType::textType);
+            ASSERT_EQ(task->status, TaskStatus::Active);
         }
 
         {

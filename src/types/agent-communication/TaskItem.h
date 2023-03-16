@@ -4,14 +4,14 @@
 
 #include <nlohmann-json/json.hpp>
 
-#include "types/enums/TaskStatus.h"
+#include "types/enums/TaskResultStatus.h"
 
 namespace nikmon {
 namespace types {
 
 struct TaskItem {
     std::string id;
-    TaskStatus status;
+    TaskResultStatus status;
     std::string errorMessage;
     std::string value;
     long int time;

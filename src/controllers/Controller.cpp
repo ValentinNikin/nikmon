@@ -14,13 +14,20 @@ bool Controller::isApplicableForRequest(const Poco::Net::HTTPServerRequest& requ
 void Controller::handleRequest(Poco::Net::HTTPServerRequest& request, Poco::Net::HTTPServerResponse& response) {
     std::size_t endpointIndex = SIZE_MAX;
     if (tryToFindEndpointForRequest(request, endpointIndex)) {
-        _endpoints[endpointIndex].handler(request, response);
+        try {
+            _endpoints[endpointIndex].handler(request, response);
+        }
+        catch (const std::exception& exception) {
+            handleHttpStatusCode(500, response);
+            std::ostream & outputStream = response.send();
+            outputStream << toJson(exception);
+            outputStream.flush();
+        }
     }
-    else {
-        handleHttpStatusCode(501, response);
-        std::ostream& errorStream = response.send();
-        errorStream.flush();
-    }
+
+    handleHttpStatusCode(501, response);
+    std::ostream& errorStream = response.send();
+    errorStream.flush();
 }
 
 bool Controller::tryToFindEndpointForRequest(const Poco::Net::HTTPServerRequest& request, std::size_t& endPointIndex) {

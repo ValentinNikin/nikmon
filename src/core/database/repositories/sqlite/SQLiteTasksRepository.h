@@ -12,6 +12,7 @@ public:
     bool insert(TaskDB& task) override;
     std::unique_ptr<TaskDB> get(const std::string& taskId) override;
     bool update(TaskDB& task) override;
+    bool toggleState(const std::string& taskId, const TaskStatus newState) override;
     bool remove(const std::string& taskId) override;
 private:
     std::string _tableName;

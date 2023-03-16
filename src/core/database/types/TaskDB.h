@@ -4,6 +4,7 @@
 
 #include "types/enums/TaskFrequency.h"
 #include "types/enums/TaskValueType.h"
+#include "types/enums/TaskStatus.h"
 
 struct TaskDB {
     std::string id;
@@ -12,6 +13,7 @@ struct TaskDB {
     int delay;
     std::string key;
     TaskValueType valueType;
+    TaskStatus status;
 
     TaskDB() = default;
 
@@ -22,5 +24,6 @@ struct TaskDB {
         delay = otherTask.delay;
         key = otherTask.key;
         valueType = otherTask.valueType;
+        status = otherTask.status;
     }
 };

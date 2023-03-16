@@ -5,9 +5,9 @@
 #include <Poco/Net/HTTPServerRequest.h>
 #include <Poco/Net/HTTPServerResponse.h>
 
-#include "types/RegistrationRequest.h"
-#include "types/RegistrationResponse.h"
-#include "types/StatusResponse.h"
+#include "types/agent-communication/RegistrationRequest.h"
+#include "types/agent-communication/RegistrationResponse.h"
+#include "types/agent-communication/StatusResponse.h"
 
 using namespace nikmon::types;
 
@@ -19,47 +19,33 @@ AgentCommunicatorController::AgentCommunicatorController(
 }
 
 void AgentCommunicatorController::registerAgent(Poco::Net::HTTPServerRequest& request, Poco::Net::HTTPServerResponse& response) {
-    try {
-        auto payload = readPayloadFromRequest(request);
+    auto payload = readPayloadFromRequest(request);
 
-        RegistrationRequest registrationRequest;
-        from_json(request, registrationRequest);
+    RegistrationRequest registrationRequest;
+    from_json(request, registrationRequest);
 
-        auto registrationResponse = _agentCommunicator->registerAgent(registrationRequest);
-        nlohmann::json responseJson;
-        to_json(responseJson, registrationResponse);
+    auto registrationResponse = _agentCommunicator->registerAgent(registrationRequest);
+    nlohmann::json responseJson;
+    to_json(responseJson, registrationResponse);
 
-        handleHttpStatusCode(200, response);
-        std::ostream &outputStream = response.send();
-        outputStream << to_string(responseJson);
-        outputStream.flush();
-    } catch (const std::exception& exception) {
-        handleHttpStatusCode(500, response);
-        std::ostream & outputStream = response.send();
-        outputStream << toJson(exception);
-        outputStream.flush();
-    }
+    handleHttpStatusCode(200, response);
+    std::ostream &outputStream = response.send();
+    outputStream << to_string(responseJson);
+    outputStream.flush();
 }
 
 void AgentCommunicatorController::statusAgent(Poco::Net::HTTPServerRequest& request, Poco::Net::HTTPServerResponse& response) {
-    try {
-        auto payload = readPayloadFromRequest(request);
+    auto payload = readPayloadFromRequest(request);
 
-        StatusRequest statusRequest;
-        from_json(payload, statusRequest);
+    StatusRequest statusRequest;
+    from_json(payload, statusRequest);
 
-        auto statusResponse = _agentCommunicator->statusAgent(statusRequest);
-        nlohmann::json responseJson;
-        to_json(responseJson, statusResponse);
+    auto statusResponse = _agentCommunicator->statusAgent(statusRequest);
+    nlohmann::json responseJson;
+    to_json(responseJson, statusResponse);
 
-        handleHttpStatusCode(200, response);
-        std::ostream &outputStream = response.send();
-        outputStream << to_string(responseJson);
-        outputStream.flush();
-    } catch (const std::exception& exception) {
-        handleHttpStatusCode(500, response);
-        std::ostream & outputStream = response.send();
-        outputStream << toJson(exception);
-        outputStream.flush();
-    }
+    handleHttpStatusCode(200, response);
+    std::ostream &outputStream = response.send();
+    outputStream << to_string(responseJson);
+    outputStream.flush();
 }

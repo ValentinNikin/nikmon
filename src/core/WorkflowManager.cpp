@@ -3,28 +3,30 @@
 #include <algorithm>
 
 #include "types/Task.h"
-#include "types/enums/TaskStatus.h"
+#include "types/enums/TaskResultStatus.h"
 #include "types/enums/CommandType.h"
 
-using Task = nikmon::types::Task;
+using namespace nikmon::types;
 
 WorkflowManager::WorkflowManager(
         const std::shared_ptr<IDatabaseManager>& databaseManager)
         : _databaseManager(databaseManager) {}
 
-nikmon::types::RegistrationResponse WorkflowManager::registerAgent(const RegistrationRequest& registrationRequest) {
-    std::shared_ptr<Agent> agent;
-    {
-        std::lock_guard<std::mutex> lg(_agentsListMutex);
-        auto activeAgentIt = std::find_if(_agents.cbegin(), _agents.cend(), [&registrationRequest](const auto &agent) {
-            return agent->machineName == registrationRequest.machineName && agent->ip == registrationRequest.ip;
-        });
+RegistrationResponse WorkflowManager::registerAgent(const RegistrationRequest& registrationRequest) {
 
-        if (activeAgentIt != _agents.cend()) {
-            agent = *activeAgentIt;
-        }
+    // extract agent configuration from database
+    auto existAgents = _databaseManager->getAgentsByIpAndMachineName(registrationRequest.ip, registrationRequest.machineName);
+    if (existAgents.empty()) {
+        throw std::runtime_error("Not found configuration for the registered agent");
     }
 
+    if (existAgents.size() > 1) {
+        // TODO: print something to log, this is wrong situation
+    }
+
+    const auto& agentDb = existAgents[0];
+
+    auto agent = findAgent(agentDb->id);
     if (agent != nullptr) {
         // clear agent state
         {
@@ -37,17 +39,6 @@ nikmon::types::RegistrationResponse WorkflowManager::registerAgent(const Registr
         }
     }
     else {
-        // extract agent configuration from database and add to collection
-        auto existAgents = _databaseManager->getAgentsByIpAndMachineName(
-                registrationRequest.ip, registrationRequest.machineName);
-        if (existAgents.empty()) {
-            throw std::runtime_error("Not found configuration for the registered agent");
-        }
-
-        if (existAgents.size() > 1) {
-            // TODO: print something to log, this is wrong situation
-        }
-
         agent = std::make_shared<Agent>(existAgents[0].get());
         std::lock_guard<std::mutex> lg(_agentsListMutex);
         _agents.push_back(agent);
@@ -61,19 +52,10 @@ nikmon::types::RegistrationResponse WorkflowManager::registerAgent(const Registr
     return registrationResponse;
 }
 
-nikmon::types::StatusResponse WorkflowManager::statusAgent(const StatusRequest& statusRequest) {
-    std::shared_ptr<Agent> agent;
-    {
-        std::lock_guard<std::mutex> lg(_agentsListMutex);
-        auto agentIt = std::find_if(_agents.cbegin(), _agents.cend(), [id = statusRequest.id](const auto &agent) {
-            return agent->id == id;
-        });
-
-        if (agentIt == _agents.cend()) {
-            throw std::runtime_error("Agent is not registered");
-        }
-
-        agent = *agentIt;
+StatusResponse WorkflowManager::statusAgent(const StatusRequest& statusRequest) {
+    auto agent = findAgent(statusRequest.id);
+    if (agent == nullptr) {
+        throw std::runtime_error("Agent is not registered");
     }
 
     // process commands confirmations
@@ -97,7 +79,7 @@ nikmon::types::StatusResponse WorkflowManager::statusAgent(const StatusRequest& 
 
     // process tasks items
     for (const auto& ti : statusRequest.items) {
-        if (ti.status == TaskStatus::Error) {
+        if (ti.status == TaskResultStatus::Error) {
             TaskItemErrorDB tieDB;
             tieDB.taskId = ti.id;
             tieDB.time = ti.time;
@@ -156,26 +138,38 @@ nikmon::types::StatusResponse WorkflowManager::statusAgent(const StatusRequest& 
     return statusResponse;
 }
 
+std::vector<AgentShortInfo> WorkflowManager::getAgents() {
+    std::vector<AgentShortInfo> agents;
+    auto agentsDb = _databaseManager->getAgents();
+
+    for (const auto& a : agentsDb) {
+        AgentShortInfo agentSI;
+        agentSI.id = a->id;
+        agentSI.ip = a->ip;
+        agentSI.machineName = a->machineName;
+        agentSI.status = findAgent(a->id) != nullptr ? AgentStatus::connected : AgentStatus::disconnected;
+
+        agents.push_back(agentSI);
+    }
+
+    return agents;
+}
+
+void WorkflowManager::createAgent(const nikmon::types::EditAgent& editAgent) {
+    _databaseManager->createAgent(editAgent);
+}
+
 void WorkflowManager::assignTask(const std::string& agentId, const EditTask& newTask) {
-    std::shared_ptr<Agent> agent;
-    {
-        std::lock_guard<std::mutex> lg(_agentsListMutex);
-        auto agentIt = std::find_if(_agents.cbegin(), _agents.cend(), [&agentId](const auto &agent) {
-            return agent->id == agentId;
-        });
-
-        if (agentIt == _agents.cend()) {
-            throw std::runtime_error("Agent is not registered");
-        }
-
-        agent = *agentIt;
+    auto agent = findAgent(agentId);
+    if (agent == nullptr) {
+        throw std::runtime_error("Agent is not registered");
     }
 
     auto task = std::make_shared<Task>(newTask);
     task->agentId = agent->id;
 
     {
-        auto command = std::make_shared<nikmon::types::Command>();
+        auto command = std::make_shared<Command>();
         command->taskId = task->id;
         command->type = CommandType::Add;
         command->payload.key = task->key;
@@ -192,4 +186,135 @@ void WorkflowManager::assignTask(const std::string& agentId, const EditTask& new
     }
 
     _databaseManager->saveTask(*task);
+}
+
+std::vector<TaskShortInfo> WorkflowManager::getTasks(const std::string& agentId) {
+    std::vector<TaskShortInfo> tasks;
+
+    auto agent = findAgent(agentId);
+    auto tasksDb = _databaseManager->getTasks(agentId);
+
+    for (const auto& t : tasksDb) {
+        TaskShortInfo taskSI;
+        taskSI.id = t->id;
+        taskSI.key = t->key;
+        taskSI.status = t->status;
+
+        if (agent != nullptr) {
+            std::lock_guard<std::mutex> lg(agent->tasksMutex);
+            auto taskIt = std::find_if(agent->tasks.cbegin(), agent->tasks.cend(), [&t](const auto& task) {
+                return task->id == t->id;
+            });
+
+            if (taskIt != agent->tasks.cend()) {
+                taskSI.status = (*taskIt)->status;
+            }
+        }
+
+        tasks.push_back(taskSI);
+    }
+
+    return tasks;
+}
+
+std::shared_ptr<Agent> WorkflowManager::findAgent(const std::string& id) {
+    std::lock_guard<std::mutex> lg(_agentsListMutex);
+    auto agentIt = std::find_if(_agents.cbegin(), _agents.cend(), [&id](const auto &agent) {
+        return agent->id == id;
+    });
+
+    if (agentIt == _agents.cend()) {
+        return nullptr;
+    }
+
+    return *agentIt;
+}
+
+void WorkflowManager::editTask(const std::string& agentId, const nikmon::types::EditTask& editTask) {
+    _databaseManager->editTask(editTask);
+
+    auto agent = findAgent(agentId);
+    if (agent != nullptr) {
+        std::shared_ptr<Task> task;
+        {
+            std::lock_guard<std::mutex> lg(agent->tasksMutex);
+            auto taskIt = std::find_if(agent->tasks.cbegin(), agent->tasks.cend(), [&editTask](const auto &task) {
+                return task->id == editTask.id;
+            });
+
+            if (taskIt != agent->tasks.cend()) {
+                task = *taskIt;
+            }
+
+        }
+
+        if (task != nullptr) {
+            task->acceptChanges(editTask);
+
+            auto command = std::make_shared<Command>();
+            command->taskId = task->id;
+            command->type = CommandType::Change;
+            command->payload.frequency = task->frequency;
+            command->payload.delay = task->delay;
+            command->payload.key = task->key;
+
+            std::lock_guard<std::mutex> lg(agent->waitableCommandsMutex);
+            agent->waitableCommands.push_back(command);
+        }
+    }
+}
+
+void WorkflowManager::toggleTask(const std::string& agentId, const std::string& taskId) {
+
+    auto isTaskActive = false;
+
+    auto agent = findAgent(agentId);
+    if (agent != nullptr) {
+        std::lock_guard<std::mutex> lg(agent->tasksMutex);
+        auto taskIt = std::find_if(agent->tasks.cbegin(), agent->tasks.cend(), [&taskId](const auto& t) {
+            return t->id == taskId;
+        });
+
+        if (taskIt == agent->tasks.end()) {
+            if ((*taskIt)->status == TaskStatus::Pending) {
+                // TODO: replace throwing exception to specified instance of exception object
+                throw std::runtime_error("Please wait while the previous command is applied to the task");
+            }
+            else if ((*taskIt)->status == TaskStatus::Stopped) {
+                // TODO: this is wrong situation, print something to log
+            }
+
+            isTaskActive = true;
+
+            auto command = std::make_shared<Command>();
+            command->taskId = taskId;
+            command->type = CommandType::Cancel;
+
+            std::lock_guard<std::mutex> innerLg(agent->waitableCommandsMutex);
+            agent->waitableCommands.push_back(command);
+            _databaseManager->toggleTask(taskId, TaskStatus::Stopped);
+            return;
+        }
+    }
+
+    _databaseManager->toggleTask(taskId, TaskStatus::Active);
+    auto taskDb = _databaseManager->getTask(taskId);
+
+    auto task = std::make_shared<Task>(*taskDb);
+    task->status = TaskStatus::Pending;
+    {
+        std::lock_guard<std::mutex> lg(agent->tasksMutex);
+        agent->tasks.push_back(task);
+    }
+
+    auto command = std::make_shared<Command>();
+    command->taskId = task->id;
+    command->type = CommandType::Add;
+    command->payload.key = task->key;
+    command->payload.delay = task->delay;
+    command->payload.frequency = task->frequency;
+    {
+        std::lock_guard<std::mutex> lg(agent->waitableCommandsMutex);
+        agent->waitableCommands.push_back(command);
+    }
 }

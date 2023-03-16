@@ -13,5 +13,6 @@ public:
     virtual bool insert(TaskDB&) = 0;
     virtual std::unique_ptr<TaskDB> get(const std::string& taskId) = 0;
     virtual bool update(TaskDB&) = 0;
+    virtual bool toggleState(const std::string& taskId, const TaskStatus newState) = 0;
     virtual bool remove(const std::string& taskId) = 0;
 };

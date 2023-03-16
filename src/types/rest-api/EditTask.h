@@ -11,6 +11,7 @@ namespace nikmon {
 namespace types {
 
 struct EditTask {
+    std::string id;
     TaskFrequency frequency;
     int delay;
     std::string key;

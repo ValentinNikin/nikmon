@@ -5,7 +5,7 @@
 #include "core/database/types/AgentDB.h"
 
 #include "Task.h"
-#include "Command.h"
+#include "types/agent-communication/Command.h"
 
 namespace nikmon {
 namespace types {

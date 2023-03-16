@@ -2,7 +2,7 @@
 
 #include <string>
 
-#include "nlohmann-json/json.hpp"
+#include <nlohmann-json/json.hpp>
 
 namespace nikmon {
 namespace types {

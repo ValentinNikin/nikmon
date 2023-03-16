@@ -1,9 +1,9 @@
 #pragma once
 
-#include "types/RegistrationRequest.h"
-#include "types/RegistrationResponse.h"
-#include "types/StatusRequest.h"
-#include "types/StatusResponse.h"
+#include "types/agent-communication/RegistrationRequest.h"
+#include "types/agent-communication/RegistrationResponse.h"
+#include "types/agent-communication/StatusRequest.h"
+#include "types/agent-communication/StatusResponse.h"
 
 class IAgentCommunicator {
 protected:
