@@ -22,8 +22,8 @@ public:
 
     // IAgentsManager implementation
     std::vector<nikmon::types::AgentShortInfo> getAgents() override;
-    void createAgent(const nikmon::types::EditAgent&) override;
-    void assignTask(const std::string& agentId, const nikmon::types::EditTask& newTask) override;
+    std::string createAgent(const nikmon::types::EditAgent&) override;
+    std::string assignTask(const std::string& agentId, const nikmon::types::EditTask& newTask) override;
     void editTask(const std::string& agentId, const nikmon::types::EditTask& editTask) override;
     void removeTask(const std::string& agentId, const std::string& taskId) override;
     void toggleTask(const std::string& agentId, const std::string& taskId) override;

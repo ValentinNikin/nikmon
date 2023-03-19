@@ -51,8 +51,9 @@ add_library(
         types/rest-api/AgentShortInfo.h
         types/rest-api/TaskShortInfo.h
         types/rest-api/EditTask.h
+        types/rest-api/EditTask.cpp
         types/rest-api/EditAgent.h
-        types/rest-api/TaskShortInfo.h
+        types/rest-api/EditAgent.cpp
         types/rest-api/TaskErrorItem.h
         types/rest-api/TaskResultItem.h
         types/rest-api/TaskInfo.h

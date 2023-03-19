@@ -12,8 +12,8 @@ public:
     virtual ~IAgentsManager() = default;
 
     virtual std::vector<nikmon::types::AgentShortInfo> getAgents() = 0;
-    virtual void createAgent(const nikmon::types::EditAgent&) = 0;
-    virtual void assignTask(const std::string& agentId, const nikmon::types::EditTask&) = 0;
+    virtual std::string createAgent(const nikmon::types::EditAgent&) = 0;
+    virtual std::string assignTask(const std::string& agentId, const nikmon::types::EditTask&) = 0;
     virtual void editTask(const std::string& agentId, const nikmon::types::EditTask& editTask) = 0;
     virtual void removeTask(const std::string& agentId, const std::string& taskId) = 0;
     virtual void toggleTask(const std::string& agentId, const std::string& taskId) = 0;

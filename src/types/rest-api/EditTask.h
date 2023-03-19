@@ -18,7 +18,7 @@ struct EditTask {
     TaskValueType valueType;
 };
 
-NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(EditTask, frequency, delay, key, valueType)
+void from_json(nlohmann::json &j, EditTask &task);
 
 }
 }

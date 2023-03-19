@@ -8,7 +8,9 @@ std::vector<std::string> nikmon::stringUtils::split(const std::string& str, cons
     std::string segment;
 
     while (std::getline(strStream, segment, delimiter)) {
-        arr.push_back(segment);
+        if (!segment.empty()) {
+            arr.push_back(segment);
+        }
     }
 
     return arr;

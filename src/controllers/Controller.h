@@ -39,7 +39,7 @@ protected:
             : method(method_), routeRegex(routeRegex_), handler(handler_) {}
     };
 
-    const std::string GUID_REGEX_EXPRESSION = "^[{]?[0-9a-fA-F]{8}-([0-9a-fA-F]{4}-){3}[0-9a-fA-F]{12}[}]?$";
+    const std::string GUID_REGEX_EXPRESSION = "[{]?[0-9a-fA-F]{8}-([0-9a-fA-F]{4}-){3}[0-9a-fA-F]{12}[}]?";
 
     std::vector<EndpointConf> _endpoints;
 private:

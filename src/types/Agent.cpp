@@ -59,17 +59,6 @@ std::vector<std::unique_ptr<Command>> Agent::prepareCommandsList() {
     return commands;
 }
 
-void Agent::assignTask(const EditTask& newTask) {
-    const std::string& taskId = newTask.id;
-    std::lock_guard<std::recursive_mutex> lg(_mutex);
-
-    if (std::any_of(_tasks.cbegin(), _tasks.cend(), [&taskId](const auto& task) { return task->getId() == taskId; })) {
-        throw std::runtime_error("Task with id " + taskId + " already exist");
-    }
-
-    _tasks.push_back(std::make_unique<Task>(newTask));
-}
-
 void Agent::assignTask(const TaskDB& newTask) {
     const std::string& taskId = newTask.id;
     std::lock_guard<std::recursive_mutex> lg(_mutex);

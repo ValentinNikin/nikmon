@@ -60,11 +60,15 @@ void AgentsController::createAgent(Poco::Net::HTTPServerRequest& request, Poco::
     EditAgent newAgent;
     from_json(payload, newAgent);
 
-    _agentsManager->createAgent(newAgent);
+    auto agentId = _agentsManager->createAgent(newAgent);
+
+    auto resJson = nlohmann::json();
+    resJson["id"] = agentId;
 
     handleHttpStatusCode(200, response);
-    std::ostream& errorStream = response.send();
-    errorStream.flush();
+    std::ostream& outputStream = response.send();
+    outputStream << to_string(resJson);
+    outputStream.flush();
 }
 
 void AgentsController::editAgent(Poco::Net::HTTPServerRequest& request, Poco::Net::HTTPServerResponse& response) {
@@ -96,7 +100,7 @@ void AgentsController::getTasks(Poco::Net::HTTPServerRequest& request, Poco::Net
     nlohmann::json tasksJson;
     for (const auto& t : tasks) {
         nlohmann::json taskJson;
-        to_json(tasksJson, t);
+        to_json(taskJson, t);
         tasksJson.push_back(taskJson);
     }
 
@@ -116,10 +120,14 @@ void AgentsController::assignTask(Poco::Net::HTTPServerRequest& request, Poco::N
     EditTask newTask;
     from_json(payload, newTask);
 
-    _agentsManager->assignTask(agentId, newTask);
+    auto taskId = _agentsManager->assignTask(agentId, newTask);
+
+    auto resJson = nlohmann::json();
+    resJson["id"] = taskId;
 
     handleHttpStatusCode(200, response);
     std::ostream& outputStream = response.send();
+    outputStream << to_string(resJson);
     outputStream.flush();
 }
 

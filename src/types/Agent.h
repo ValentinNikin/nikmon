@@ -44,11 +44,6 @@ public:
     /**
      * Assign task to agent
      */
-    void assignTask(const EditTask&);
-
-    /**
-     * Assign task to agent
-     */
     void assignTask(const TaskDB&);
 
     /**

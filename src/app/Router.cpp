@@ -24,5 +24,9 @@ Poco::Net::HTTPRequestHandler* Router::createRequestHandler(const Poco::Net::HTT
     CREATE_CONTROLLER_IF_APPLICABLE(AgentCommunicatorController)
     CREATE_CONTROLLER_IF_APPLICABLE(TasksController)
 
+    if (controller == nullptr) {
+        throw std::runtime_error("Unable to process request. Handler not found");
+    }
+
     return new ControllerAdapter(controller);
 }

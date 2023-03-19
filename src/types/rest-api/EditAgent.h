@@ -14,7 +14,7 @@ struct EditAgent {
     int heartbeat;
 };
 
-NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(EditAgent, id, ip, machineName, heartbeat)
+void from_json(nlohmann::json &j, EditAgent &response);
 
 }
 }

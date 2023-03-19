@@ -23,13 +23,13 @@ public:
     virtual std::vector<std::unique_ptr<AgentDB>> getAgents() = 0;
     virtual std::vector<std::unique_ptr<AgentDB>> getAgentsByIpAndMachineName(
             const std::string ip, const std::string& machineName) = 0;
-    virtual void createAgent(const nikmon::types::EditAgent&) = 0;
+    virtual std::string createAgent(const nikmon::types::EditAgent&) = 0;
 
     /// Tasks items
     virtual void saveTaskItems(const std::vector<nikmon::types::TaskItem>& items) = 0;
 
     /// Tasks
-    virtual void saveTask(const std::string& agentId, const nikmon::types::EditTask&) = 0;
+    virtual std::string saveTask(const std::string& agentId, const nikmon::types::EditTask&) = 0;
     virtual std::vector<std::unique_ptr<TaskDB>> getTasks(const std::string& agentId, const bool onlyActive = false) = 0;
     virtual std::unique_ptr<TaskDB> getTask(const std::string& taskId) = 0;
     virtual void editTask(const nikmon::types::EditTask&) = 0;

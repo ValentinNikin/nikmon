@@ -76,17 +76,20 @@ std::vector<AgentShortInfo> WorkflowManager::getAgents() {
     return agents;
 }
 
-void WorkflowManager::createAgent(const nikmon::types::EditAgent& editAgent) {
-    _databaseManager->createAgent(editAgent);
+std::string WorkflowManager::createAgent(const nikmon::types::EditAgent& editAgent) {
+    return _databaseManager->createAgent(editAgent);
 }
 
-void WorkflowManager::assignTask(const std::string& agentId, const EditTask& newTask) {
+std::string WorkflowManager::assignTask(const std::string& agentId, const EditTask& newTask) {
+    auto taskId = _databaseManager->saveTask(agentId, newTask);
+    auto taskDb = _databaseManager->getTask(taskId);
+
     auto agent = findAgent(agentId);
     if (agent != nullptr) {
-        agent->assignTask(newTask);
+        agent->assignTask(*taskDb);
     }
 
-    _databaseManager->saveTask(agentId, newTask);
+    return taskDb->id;
 }
 
 std::vector<TaskShortInfo> WorkflowManager::getTasks(const std::string& agentId) {
@@ -149,7 +152,7 @@ void WorkflowManager::toggleTask(const std::string& agentId, const std::string& 
     auto newState = !taskDb->isActive;
 
     _databaseManager->toggleTask(taskId, newState);
-    if (taskDb->agentId == agent->id && newState) {
+    if (agent != nullptr && taskDb->agentId == agent->id && newState) {
         agent->assignTask(*taskDb);
     }
 }

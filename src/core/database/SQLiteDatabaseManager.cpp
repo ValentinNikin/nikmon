@@ -55,7 +55,7 @@ void createDatabaseIfNotExist(const std::string& path) {
 SQLiteDatabaseManager::SQLiteDatabaseManager() {
     // TODO: extract parameter from config file
     std::string path = "nikmon.db";
-    std::remove(path.c_str());
+//    std::remove(path.c_str());
 
     Poco::Data::SQLite::Connector::registerConnector();
     createDatabaseIfNotExist(path);
@@ -79,7 +79,7 @@ std::vector<std::unique_ptr<AgentDB>> SQLiteDatabaseManager::getAgentsByIpAndMac
     return _agentsRepository->getByIpAndMachineName(ip, machineName);
 }
 
-void SQLiteDatabaseManager::createAgent(const EditAgent& editAgent) {
+std::string SQLiteDatabaseManager::createAgent(const EditAgent& editAgent) {
     AgentDB agentDb;
     agentDb.id = Poco::UUIDGenerator().createRandom().toString();
     agentDb.ip = editAgent.ip;
@@ -87,6 +87,8 @@ void SQLiteDatabaseManager::createAgent(const EditAgent& editAgent) {
     agentDb.heartbeat = editAgent.heartbeat;
 
     _agentsRepository->insert(agentDb);
+
+    return agentDb.id;
 }
 
 void SQLiteDatabaseManager::saveTaskItems(const std::vector<TaskItem>& items) {
@@ -132,14 +134,14 @@ void SQLiteDatabaseManager::saveTaskItems(const std::vector<TaskItem>& items) {
     }
 }
 
-void SQLiteDatabaseManager::saveTask(const std::string& agentId, const nikmon::types::EditTask& task) {
+std::string SQLiteDatabaseManager::saveTask(const std::string& agentId, const nikmon::types::EditTask& task) {
     auto agentDb = _agentsRepository->get(agentId);
     if (agentDb == nullptr) {
         throw std::runtime_error("Agent with id " + agentId + " not found");
     }
 
     TaskDB taskDb;
-    taskDb.id = task.id;
+    taskDb.id = Poco::UUIDGenerator().createRandom().toString();
     taskDb.agentId = agentId;
     taskDb.frequency = task.frequency;
     taskDb.delay = task.delay;
@@ -147,6 +149,8 @@ void SQLiteDatabaseManager::saveTask(const std::string& agentId, const nikmon::t
     taskDb.valueType = task.valueType;
 
     _tasksRepository->insert(taskDb);
+
+    return taskDb.id;
 }
 
 std::vector<std::unique_ptr<TaskDB>> SQLiteDatabaseManager::getTasks(const std::string& agentId, const bool onlyActive) {

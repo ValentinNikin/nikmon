@@ -85,7 +85,8 @@ bool SQLiteTasksRepository::toggleState(const std::string& taskId, const bool is
     Poco::Data::Statement statement =
             (_session << "UPDATE %s SET IsActive = ? WHERE Id = ?", _tableName, use(isActive_), use(taskId_));
 
-    return statement.execute() != 0;
+    auto res = statement.execute() != 0;
+    return res;
 }
 
 bool SQLiteTasksRepository::remove(const std::string& taskId) {

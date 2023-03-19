@@ -15,11 +15,11 @@ public:
 
     std::vector<std::unique_ptr<AgentDB>> getAgents() override;
     std::vector<std::unique_ptr<AgentDB>> getAgentsByIpAndMachineName(const std::string ip, const std::string& machineName) override;
-    void createAgent(const nikmon::types::EditAgent& editAgent) override;
+    std::string createAgent(const nikmon::types::EditAgent& editAgent) override;
 
     void saveTaskItems(const std::vector<nikmon::types::TaskItem>& items) override;
 
-    void saveTask(const std::string& agentId, const nikmon::types::EditTask&) override;
+    std::string saveTask(const std::string& agentId, const nikmon::types::EditTask&) override;
     std::vector<std::unique_ptr<TaskDB>> getTasks(const std::string& agentId, const bool onlyActive = false) override;
     std::unique_ptr<TaskDB> getTask(const std::string& taskId) override;
     void editTask(const nikmon::types::EditTask& editTask) override;
