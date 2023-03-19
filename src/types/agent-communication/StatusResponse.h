@@ -11,7 +11,7 @@ namespace types {
 
 struct StatusResponse {
     int heartbeat;
-    std::vector<std::shared_ptr<Command>> commands;
+    std::vector<std::unique_ptr<Command>> commands;
 };
 
 void to_json(nlohmann::json &j, const StatusResponse &response);

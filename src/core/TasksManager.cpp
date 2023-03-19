@@ -3,14 +3,15 @@
 using namespace nikmon::types;
 
 TasksManager::TasksManager(const std::shared_ptr<IDatabaseManager>& databaseManager)
-    : _databaseManager(databaseManager) {}
+        : _databaseManager(databaseManager) {}
 
-std::unique_ptr<TaskInfo> getTask(const std::string& taskId) {
-
+std::unique_ptr<TaskInfo> TasksManager::getTask(const std::string& taskId) {
+    (void)taskId;
+    return nullptr;
 }
 
 void TasksManager::removeTask(const std::string& taskId) {
-
+    (void)taskId;
 }
 
 void TasksManager::removeTaskResults(const std::string& taskId) {

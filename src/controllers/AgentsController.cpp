@@ -24,6 +24,8 @@ AgentsController::AgentsController(
     REGISTER_ENDPOINT(Poco::Net::HTTPRequest::HTTP_POST, "/api/agents/" + GUID_REGEX_EXPRESSION + "/tasks", assignTask)
     REGISTER_ENDPOINT(Poco::Net::HTTPRequest::HTTP_PUT, "/api/agents/" + GUID_REGEX_EXPRESSION + "/tasks", editTask)
     REGISTER_ENDPOINT(Poco::Net::HTTPRequest::HTTP_PUT, "/api/agents/" + GUID_REGEX_EXPRESSION + "/tasks/" + GUID_REGEX_EXPRESSION + "/toggle", toggleTask)
+    REGISTER_ENDPOINT(Poco::Net::HTTPRequest::HTTP_DELETE, "/api/agents/" + GUID_REGEX_EXPRESSION + "/tasks/" + GUID_REGEX_EXPRESSION, removeTask)
+
 }
 
 void AgentsController::getAgents(Poco::Net::HTTPServerRequest&, Poco::Net::HTTPServerResponse& response) {
@@ -44,6 +46,8 @@ void AgentsController::getAgents(Poco::Net::HTTPServerRequest&, Poco::Net::HTTPS
 
 void AgentsController::getAgent(Poco::Net::HTTPServerRequest& request, Poco::Net::HTTPServerResponse& response) {
     (void)request;
+
+    // TODO: need to implement this method
 
     handleHttpStatusCode(200, response);
     std::ostream& errorStream = response.send();
@@ -66,6 +70,8 @@ void AgentsController::createAgent(Poco::Net::HTTPServerRequest& request, Poco::
 void AgentsController::editAgent(Poco::Net::HTTPServerRequest& request, Poco::Net::HTTPServerResponse& response) {
     (void)request;
 
+    // TODO: need to implement this method
+
     handleHttpStatusCode(200, response);
     std::ostream& errorStream = response.send();
     errorStream.flush();
@@ -73,6 +79,8 @@ void AgentsController::editAgent(Poco::Net::HTTPServerRequest& request, Poco::Ne
 
 void AgentsController::deleteAgent(Poco::Net::HTTPServerRequest& request, Poco::Net::HTTPServerResponse& response) {
     (void)request;
+
+    // TODO: need to implement this method
 
     handleHttpStatusCode(200, response);
     std::ostream& errorStream = response.send();
@@ -125,6 +133,18 @@ void AgentsController::editTask(Poco::Net::HTTPServerRequest& request, Poco::Net
     from_json(payload, task);
 
     _agentsManager->editTask(agentId, task);
+
+    handleHttpStatusCode(200, response);
+    std::ostream& outputStream = response.send();
+    outputStream.flush();
+}
+
+void AgentsController::removeTask(Poco::Net::HTTPServerRequest& request, Poco::Net::HTTPServerResponse& response) {
+    auto uriSegments = nikmon::stringUtils::split(request.getURI(), '/');
+    auto agentId = uriSegments[2];
+    auto taskId = uriSegments[4];
+
+    _agentsManager->removeTask(agentId, taskId);
 
     handleHttpStatusCode(200, response);
     std::ostream& outputStream = response.send();

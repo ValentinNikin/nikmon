@@ -2,52 +2,41 @@
 
 #include <string>
 
-#include <Poco/UUIDGenerator.h>
-
 #include "types/enums/TaskFrequency.h"
 #include "types/enums/TaskValueType.h"
-#include "types/enums/TaskStatus.h"
+#include "types/enums/TaskState.h"
 
 #include "core/database/types/TaskDB.h"
-
 #include "types/rest-api/EditTask.h"
+#include "types/agent-communication/Command.h"
+#include "types/agent-communication/CommandConfirmation.h"
 
 namespace nikmon {
 namespace types {
 
-struct Task {
-    std::string id;
-    std::string agentId;
-    TaskFrequency frequency;
-    int delay;
-    std::string key;
-    TaskValueType valueType;
-    TaskStatus status;
+class Task {
+public:
 
-    Task(const EditTask& task) {
-        id = Poco::UUIDGenerator().createRandom().toString();
-        frequency = task.frequency;
-        delay = task.delay;
-        key = task.key;
-        valueType = task.valueType;
-    }
+    Task(const EditTask& task);
+    Task(const TaskDB& task);
 
-    Task(const TaskDB& task) {
-        id = task.id;
-        frequency = task.frequency;
-        delay = task.delay;
-        key = task.key;
-        valueType = task.valueType;
-    }
+    std::string getId() const;
+    TaskStatus getStatus() const;
 
-    void acceptChanges(const EditTask& task) {
-        frequency = task.frequency;
-        delay = task.delay;
-        key = task.key;
-        valueType = task.valueType;
+    std::unique_ptr<Command> constructCommand() const;
 
-        status = TaskStatus::Pending;
-    }
+    void acceptChanges(const EditTask&);
+    void acceptCancel();
+    void acceptConfirmation(const CommandConfirmation&);
+
+private:
+    std::string _id;
+    TaskFrequency _frequency;
+    int _delay;
+    std::string _key;
+    TaskValueType _valueType;
+
+    TaskState _state;
 };
 
 }

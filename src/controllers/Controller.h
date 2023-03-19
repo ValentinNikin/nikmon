@@ -17,9 +17,9 @@ class Controller : public Poco::Net::HTTPRequestHandler {
 public:
     virtual ~Controller() = default;
     /**
-     * Определяет, применим ли экземпляр контроллера для обработки запроса
-     * @param request запрос
-     * @return true - применим, false - в противном случае
+     * Determine that controller instance is applicable to handle request
+     * @param request request
+     * @return true - applicable, false - not applicable
      */
     bool isApplicableForRequest(const Poco::Net::HTTPServerRequest& request);
 

@@ -4,18 +4,17 @@
 
 enum class TaskStatus : uint8_t {
     /**
-     * Выполнение задачи приостановлено
+     * Task execution is stopped
      */
     Stopped = 0,
 
     /**
-     * Выполнение задачи активно
+     * Task is active (agent collect information)
      */
     Active,
 
     /**
-     * Ожидается подтверждение от агента.
-     * Например, когда изменена конфигурация задачи, либо задача назначена агенту после остановки.
+     * Some intermediate state while agent does not confirm the command
      */
     Pending
 };

@@ -15,33 +15,29 @@ WorkflowManager::WorkflowManager(
 RegistrationResponse WorkflowManager::registerAgent(const RegistrationRequest& registrationRequest) {
 
     // extract agent configuration from database
-    auto existAgents = _databaseManager->getAgentsByIpAndMachineName(registrationRequest.ip, registrationRequest.machineName);
-    if (existAgents.empty()) {
+    auto agentsDb = _databaseManager->getAgentsByIpAndMachineName(registrationRequest.ip, registrationRequest.machineName);
+    if (agentsDb.empty()) {
         throw std::runtime_error("Not found configuration for the registered agent");
     }
 
-    if (existAgents.size() > 1) {
+    if (agentsDb.size() > 1) {
         // TODO: print something to log, this is wrong situation
     }
 
-    const auto& agentDb = existAgents[0];
+    const auto& agentDb = agentsDb[0];
 
+    // try to find already exist agent in active agents
     auto agent = findAgent(agentDb->id);
     if (agent != nullptr) {
-        // clear agent state
-        {
-            std::lock_guard<std::mutex> lg(agent->tasksMutex);
-            agent->tasks.clear();
-        }
-        {
-            std::lock_guard<std::mutex> lg(agent->waitableCommandsMutex);
-            agent->waitableCommands.clear();
-        }
+        // if agent has been found we should reset agent state
+        agent->reset();
     }
     else {
-        agent = std::make_shared<Agent>(existAgents[0].get());
-        std::lock_guard<std::mutex> lg(_agentsListMutex);
-        _agents.push_back(agent);
+        auto newAgent = std::make_unique<Agent>(agentDb.get());
+        newAgent->init(_databaseManager->getTasks(newAgent->id, true));
+        addAgent(std::move(newAgent));
+
+        agent = newAgent.get();
     }
 
     RegistrationResponse registrationResponse;
@@ -58,84 +54,9 @@ StatusResponse WorkflowManager::statusAgent(const StatusRequest& statusRequest) 
         throw std::runtime_error("Agent is not registered");
     }
 
-    // process commands confirmations
-    {
-        std::lock_guard<std::mutex> lg(agent->waitableCommandsMutex);
-        for (const auto &c: statusRequest.confirmations) {
-            auto agentWaitableCommandIt = std::find_if(
-                    agent->waitableCommands.cbegin(), agent->waitableCommands.cend(),
-                    [&c](const auto &wc) {
-                        return wc->taskId == c.taskId && wc->type == c.type;
-                    });
+    _databaseManager->saveTaskItems(statusRequest.items);
 
-            if (agentWaitableCommandIt == agent->waitableCommands.cend()) {
-                // TODO: print something to log
-                continue;
-            }
-
-            agent->waitableCommands.erase(agentWaitableCommandIt);
-        }
-    }
-
-    // process tasks items
-    for (const auto& ti : statusRequest.items) {
-        if (ti.status == TaskResultStatus::Error) {
-            TaskItemErrorDB tieDB;
-            tieDB.taskId = ti.id;
-            tieDB.time = ti.time;
-            tieDB.message = ti.errorMessage;
-            _databaseManager->saveTaskItemError(tieDB);
-            continue;
-        }
-
-        TaskValueType taskValueType;
-        {
-            std::lock_guard<std::mutex> lg(agent->tasksMutex);
-            auto taskIt = std::find_if(agent->tasks.cbegin(), agent->tasks.cend(),
-                                       [&ti](const auto &task) {
-                                           return task->id == ti.id;
-                                       });
-
-            if (taskIt == agent->tasks.cend()) {
-                // TODO: print something to log
-                continue;
-            }
-
-            taskValueType = (*taskIt)->valueType;
-        }
-
-        if (taskValueType == TaskValueType::uintType) {
-            TaskItemDB<uint> tiDB;
-            tiDB.taskId = ti.id;
-            tiDB.time = ti.time;
-            tiDB.value = atoi(ti.value.c_str());
-            _databaseManager->saveTaskItem(tiDB);
-        }
-        else if (taskValueType == TaskValueType::floatType) {
-            TaskItemDB<float> tiDB;
-            tiDB.taskId = ti.id;
-            tiDB.time = ti.time;
-            tiDB.value = atof(ti.value.c_str());
-            _databaseManager->saveTaskItem(tiDB);
-        }
-        else if (taskValueType == TaskValueType::textType) {
-            TaskItemDB<std::string> tiDB;
-            tiDB.taskId = ti.id;
-            tiDB.time = ti.time;
-            tiDB.value = ti.value;
-            _databaseManager->saveTaskItem(tiDB);
-        }
-    }
-
-    StatusResponse statusResponse;
-
-    statusResponse.heartbeat = agent->heartbeat;
-    {
-        std::lock_guard<std::mutex> lg(agent->waitableCommandsMutex);
-        statusResponse.commands = agent->waitableCommands;
-    }
-
-    return statusResponse;
+    return agent->prepareStatusResponse(statusRequest.confirmations);
 }
 
 std::vector<AgentShortInfo> WorkflowManager::getAgents() {
@@ -161,160 +82,93 @@ void WorkflowManager::createAgent(const nikmon::types::EditAgent& editAgent) {
 
 void WorkflowManager::assignTask(const std::string& agentId, const EditTask& newTask) {
     auto agent = findAgent(agentId);
-    if (agent == nullptr) {
-        throw std::runtime_error("Agent is not registered");
+    if (agent != nullptr) {
+        agent->assignTask(newTask);
     }
 
-    auto task = std::make_shared<Task>(newTask);
-    task->agentId = agent->id;
-
-    {
-        auto command = std::make_shared<Command>();
-        command->taskId = task->id;
-        command->type = CommandType::Add;
-        command->payload.key = task->key;
-        command->payload.delay = task->delay;
-        command->payload.frequency = task->frequency;
-
-        std::lock_guard<std::mutex> lg(agent->waitableCommandsMutex);
-        agent->waitableCommands.push_back(command);
-    }
-
-    {
-        std::lock_guard<std::mutex> lg(agent->tasksMutex);
-        agent->tasks.push_back(task);
-    }
-
-    _databaseManager->saveTask(*task);
+    _databaseManager->saveTask(agentId, newTask);
 }
 
 std::vector<TaskShortInfo> WorkflowManager::getTasks(const std::string& agentId) {
-    std::vector<TaskShortInfo> tasks;
+    std::vector<TaskShortInfo> results;
 
     auto agent = findAgent(agentId);
-    auto tasksDb = _databaseManager->getTasks(agentId);
 
+    auto tasksDb = _databaseManager->getTasks(agentId);
     for (const auto& t : tasksDb) {
         TaskShortInfo taskSI;
         taskSI.id = t->id;
         taskSI.key = t->key;
-        taskSI.status = t->status;
+        taskSI.status = TaskStatus::Stopped;
 
         if (agent != nullptr) {
-            std::lock_guard<std::mutex> lg(agent->tasksMutex);
-            auto taskIt = std::find_if(agent->tasks.cbegin(), agent->tasks.cend(), [&t](const auto& task) {
-                return task->id == t->id;
-            });
-
-            if (taskIt != agent->tasks.cend()) {
-                taskSI.status = (*taskIt)->status;
+            auto processingTask = agent->getTask(t->id);
+            if (processingTask != nullptr) {
+                taskSI.status = processingTask->getStatus();
             }
         }
 
-        tasks.push_back(taskSI);
+        results.push_back(taskSI);
     }
 
-    return tasks;
-}
-
-std::shared_ptr<Agent> WorkflowManager::findAgent(const std::string& id) {
-    std::lock_guard<std::mutex> lg(_agentsListMutex);
-    auto agentIt = std::find_if(_agents.cbegin(), _agents.cend(), [&id](const auto &agent) {
-        return agent->id == id;
-    });
-
-    if (agentIt == _agents.cend()) {
-        return nullptr;
-    }
-
-    return *agentIt;
+    return results;
 }
 
 void WorkflowManager::editTask(const std::string& agentId, const nikmon::types::EditTask& editTask) {
-    _databaseManager->editTask(editTask);
-
     auto agent = findAgent(agentId);
     if (agent != nullptr) {
-        std::shared_ptr<Task> task;
-        {
-            std::lock_guard<std::mutex> lg(agent->tasksMutex);
-            auto taskIt = std::find_if(agent->tasks.cbegin(), agent->tasks.cend(), [&editTask](const auto &task) {
-                return task->id == editTask.id;
-            });
-
-            if (taskIt != agent->tasks.cend()) {
-                task = *taskIt;
-            }
-
-        }
-
-        if (task != nullptr) {
-            task->acceptChanges(editTask);
-
-            auto command = std::make_shared<Command>();
-            command->taskId = task->id;
-            command->type = CommandType::Change;
-            command->payload.frequency = task->frequency;
-            command->payload.delay = task->delay;
-            command->payload.key = task->key;
-
-            std::lock_guard<std::mutex> lg(agent->waitableCommandsMutex);
-            agent->waitableCommands.push_back(command);
-        }
+        agent->editTask(editTask);
     }
+
+    _databaseManager->editTask(editTask);
+}
+
+void WorkflowManager::removeTask(const std::string& agentId, const std::string& taskId) {
+    auto agent = findAgent(agentId);
+    if (agent != nullptr) {
+        agent->cancelTask(taskId);
+    }
+
+    _databaseManager->removeTask(taskId);
 }
 
 void WorkflowManager::toggleTask(const std::string& agentId, const std::string& taskId) {
-
-    auto isTaskActive = false;
-
     auto agent = findAgent(agentId);
     if (agent != nullptr) {
-        std::lock_guard<std::mutex> lg(agent->tasksMutex);
-        auto taskIt = std::find_if(agent->tasks.cbegin(), agent->tasks.cend(), [&taskId](const auto& t) {
-            return t->id == taskId;
-        });
-
-        if (taskIt == agent->tasks.end()) {
-            if ((*taskIt)->status == TaskStatus::Pending) {
-                // TODO: replace throwing exception to specified instance of exception object
-                throw std::runtime_error("Please wait while the previous command is applied to the task");
-            }
-            else if ((*taskIt)->status == TaskStatus::Stopped) {
-                // TODO: this is wrong situation, print something to log
-            }
-
-            isTaskActive = true;
-
-            auto command = std::make_shared<Command>();
-            command->taskId = taskId;
-            command->type = CommandType::Cancel;
-
-            std::lock_guard<std::mutex> innerLg(agent->waitableCommandsMutex);
-            agent->waitableCommands.push_back(command);
-            _databaseManager->toggleTask(taskId, TaskStatus::Stopped);
+        if (agent->cancelTask(taskId)) {
+            _databaseManager->toggleTask(taskId, false);
             return;
         }
     }
 
-    _databaseManager->toggleTask(taskId, TaskStatus::Active);
     auto taskDb = _databaseManager->getTask(taskId);
-
-    auto task = std::make_shared<Task>(*taskDb);
-    task->status = TaskStatus::Pending;
-    {
-        std::lock_guard<std::mutex> lg(agent->tasksMutex);
-        agent->tasks.push_back(task);
+    if (taskDb == nullptr) {
+        throw std::runtime_error("Task with id " + taskId + " was not found");
     }
 
-    auto command = std::make_shared<Command>();
-    command->taskId = task->id;
-    command->type = CommandType::Add;
-    command->payload.key = task->key;
-    command->payload.delay = task->delay;
-    command->payload.frequency = task->frequency;
-    {
-        std::lock_guard<std::mutex> lg(agent->waitableCommandsMutex);
-        agent->waitableCommands.push_back(command);
+    auto newState = !taskDb->isActive;
+
+    _databaseManager->toggleTask(taskId, newState);
+    if (taskDb->agentId == agent->id && newState) {
+        agent->assignTask(*taskDb);
     }
+}
+
+nikmon::types::Agent* WorkflowManager::findAgent(const std::string& id) {
+    std::lock_guard<std::mutex> lg(_mutex);
+
+    auto existAgentIt = std::find_if(_agents.cbegin(), _agents.cend(), [&id](const auto& agent) {
+        return agent->id == id;
+    });
+
+    if (existAgentIt == _agents.cend()) {
+        return nullptr;
+    }
+
+    return existAgentIt->get();
+}
+
+void WorkflowManager::addAgent(std::unique_ptr<nikmon::types::Agent> agent) {
+    std::lock_guard<std::mutex> lg(_mutex);
+    _agents.push_back(std::move(agent));
 }

@@ -16,6 +16,7 @@ private:
     void getTasks(Poco::Net::HTTPServerRequest& request, Poco::Net::HTTPServerResponse& response);
     void assignTask(Poco::Net::HTTPServerRequest& request, Poco::Net::HTTPServerResponse& response);
     void editTask(Poco::Net::HTTPServerRequest& request, Poco::Net::HTTPServerResponse& response);
+    void removeTask(Poco::Net::HTTPServerRequest& request, Poco::Net::HTTPServerResponse& response);
     void toggleTask(Poco::Net::HTTPServerRequest& request, Poco::Net::HTTPServerResponse& response);
 private:
     std::shared_ptr<IAgentsManager> _agentsManager;

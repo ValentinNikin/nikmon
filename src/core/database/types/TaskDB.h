@@ -13,7 +13,7 @@ struct TaskDB {
     int delay;
     std::string key;
     TaskValueType valueType;
-    TaskStatus status;
+    bool isActive;
 
     TaskDB() = default;
 
@@ -24,6 +24,6 @@ struct TaskDB {
         delay = otherTask.delay;
         key = otherTask.key;
         valueType = otherTask.valueType;
-        status = otherTask.status;
+        isActive = otherTask.isActive;
     }
 };

@@ -36,7 +36,7 @@ void createDatabaseIfNotExist(const std::string& path) {
                "[Ip] nvarchar NOT NULL, [Heartbeat] int NOT NULL, [Info] text)", TABLE_AGENTS, now;
 
     session << "CREATE TABLE %s ([Id] blob NOT NULL PRIMARY KEY, [AgentId] blob NOT NULL, "
-                "[Frequency] int NOT NULL, [Delay] int, [Key] nvarchar NOT NULL, [Type] int NOT NULL, [Status] int NOT NULL, "
+                "[Frequency] int NOT NULL, [Delay] int, [Key] nvarchar NOT NULL, [Type] int NOT NULL, [IsActive] boolean NOT NULL, "
                 "FOREIGN KEY (AgentId) REFERENCES Agents(Id))", TABLE_TASKS, now;
 
     session << "CREATE TABLE %s ([TaskId] blob NOT NULL, [Time] int NOT NULL, [Value] int, "
@@ -89,26 +89,58 @@ void SQLiteDatabaseManager::createAgent(const EditAgent& editAgent) {
     _agentsRepository->insert(agentDb);
 }
 
-void SQLiteDatabaseManager::saveTaskItem(const TaskItemDB<uint>& taskItem) {
-    _tasksItemsRepositoryUint->insert(const_cast<TaskItemDB<unsigned int>&>(taskItem));
+void SQLiteDatabaseManager::saveTaskItems(const std::vector<TaskItem>& items) {
+    for (const auto& item : items) {
+        if (item.status == TaskResultStatus::Error) {
+            TaskItemErrorDB tieDB;
+            tieDB.taskId = item.id;
+            tieDB.time = item.time;
+            tieDB.message = item.errorMessage;
+            _tasksItemsErrorsRepository->insert(tieDB);
+            continue;
+        }
+
+        auto taskDb = _tasksRepository->get(item.id);
+        if (taskDb == nullptr) {
+            // TODO: print something to log
+            continue;
+        }
+
+        auto taskValueType = taskDb->valueType;
+
+        if (taskValueType == TaskValueType::uintType) {
+            TaskItemDB<uint> tiDB;
+            tiDB.taskId = item.id;
+            tiDB.time = item.time;
+            tiDB.value = atoi(item.value.c_str());
+            _tasksItemsRepositoryUint->insert(tiDB);
+        }
+        else if (taskValueType == TaskValueType::floatType) {
+            TaskItemDB<float> tiDB;
+            tiDB.taskId = item.id;
+            tiDB.time = item.time;
+            tiDB.value = atof(item.value.c_str());
+            _tasksItemsRepositoryFloat->insert(tiDB);
+        }
+        else if (taskValueType == TaskValueType::textType) {
+            TaskItemDB<std::string> tiDB;
+            tiDB.taskId = item.id;
+            tiDB.time = item.time;
+            tiDB.value = item.value;
+            _tasksItemsRepositoryText->insert(tiDB);
+        }
+    }
 }
 
-void SQLiteDatabaseManager::saveTaskItem(const TaskItemDB<float>& taskItem) {
-    _tasksItemsRepositoryFloat->insert(const_cast<TaskItemDB<float>&>(taskItem));
-}
+void SQLiteDatabaseManager::saveTask(const std::string& agentId, const nikmon::types::EditTask& task) {
+    auto agentDb = _agentsRepository->get(agentId);
+    if (agentDb == nullptr) {
+        throw std::runtime_error("Agent with id " + agentId + " not found");
+    }
 
-void SQLiteDatabaseManager::saveTaskItem(const TaskItemDB<std::string>& taskItem) {
-    _tasksItemsRepositoryText->insert(const_cast<TaskItemDB<std::string>&>(taskItem));
-}
-
-void SQLiteDatabaseManager::saveTaskItemError(const TaskItemErrorDB& taskItemError) {
-    _tasksItemsErrorsRepository->insert(const_cast<TaskItemErrorDB&>(taskItemError));
-}
-
-void SQLiteDatabaseManager::saveTask(const Task& task) {
     TaskDB taskDb;
     taskDb.id = task.id;
-    taskDb.agentId = task.agentId;
+    taskDb.agentId = agentId;
     taskDb.frequency = task.frequency;
     taskDb.delay = task.delay;
     taskDb.key = task.key;
@@ -117,8 +149,8 @@ void SQLiteDatabaseManager::saveTask(const Task& task) {
     _tasksRepository->insert(taskDb);
 }
 
-std::vector<std::unique_ptr<TaskDB>> SQLiteDatabaseManager::getTasks(const std::string& agentId) {
-    return _tasksRepository->list(agentId);
+std::vector<std::unique_ptr<TaskDB>> SQLiteDatabaseManager::getTasks(const std::string& agentId, const bool onlyActive) {
+    return _tasksRepository->list(agentId, onlyActive);
 }
 
 std::unique_ptr<TaskDB> SQLiteDatabaseManager::getTask(const std::string& taskId) {
@@ -139,12 +171,13 @@ void SQLiteDatabaseManager::editTask(const EditTask& editTask) {
     _tasksRepository->update(*taskDb);
 }
 
-void SQLiteDatabaseManager::toggleTask(const std::string& taskId, const TaskStatus newState) {
-    _tasksRepository->toggleState(taskId, newState);
+void SQLiteDatabaseManager::toggleTask(const std::string& taskId, const bool isActive) {
+    _tasksRepository->toggleState(taskId, isActive);
 }
 
 void SQLiteDatabaseManager::removeTask(const std::string& taskId) {
-
+    _tasksRepository->remove(taskId);
+    removeTaskResults(taskId);
 }
 
 void SQLiteDatabaseManager::removeTaskResults(const std::string& taskId) {

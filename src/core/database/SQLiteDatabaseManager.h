@@ -17,16 +17,13 @@ public:
     std::vector<std::unique_ptr<AgentDB>> getAgentsByIpAndMachineName(const std::string ip, const std::string& machineName) override;
     void createAgent(const nikmon::types::EditAgent& editAgent) override;
 
-    void saveTaskItem(const TaskItemDB<uint>& taskItem) override;
-    void saveTaskItem(const TaskItemDB<float>& taskItem) override;
-    void saveTaskItem(const TaskItemDB<std::string>& taskItem) override;
-    void saveTaskItemError(const TaskItemErrorDB& taskItemError) override;
+    void saveTaskItems(const std::vector<nikmon::types::TaskItem>& items) override;
 
-    void saveTask(const nikmon::types::Task& task) override;
-    std::vector<std::unique_ptr<TaskDB>> getTasks(const std::string& agentId) override;
+    void saveTask(const std::string& agentId, const nikmon::types::EditTask&) override;
+    std::vector<std::unique_ptr<TaskDB>> getTasks(const std::string& agentId, const bool onlyActive = false) override;
     std::unique_ptr<TaskDB> getTask(const std::string& taskId) override;
     void editTask(const nikmon::types::EditTask& editTask) override;
-    void toggleTask(const std::string& taskId, const TaskStatus newState) override;
+    void toggleTask(const std::string& taskId, const bool isActive) override;
     void removeTask(const std::string& taskId) override;
     void removeTaskResults(const std::string& taskId) override;
     std::vector<std::unique_ptr<nikmon::types::TaskResultItem>> getResults(const std::string& taskId, const long from, const long to) override;

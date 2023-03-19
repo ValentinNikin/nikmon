@@ -12,25 +12,19 @@ using namespace nikmon::types;
 TasksController::TasksController(const std::shared_ptr<ITasksManager>& tasksManager)
         : _tasksManager(tasksManager) {
     REGISTER_ENDPOINT(Poco::Net::HTTPRequest::HTTP_GET, "/api/tasks/" + GUID_REGEX_EXPRESSION, getTask)
-    REGISTER_ENDPOINT(Poco::Net::HTTPRequest::HTTP_DELETE, "/api/tasks/" + GUID_REGEX_EXPRESSION, removeTask)
     REGISTER_ENDPOINT(Poco::Net::HTTPRequest::HTTP_DELETE, "/api/tasks/" + GUID_REGEX_EXPRESSION + "/result", removeTaskResults)
-    REGISTER_ENDPOINT(Poco::Net::HTTPRequest::HTTP_GET, "/api/tasks/" + GUID_REGEX_EXPRESSION + "/result?*", getResults)
-    REGISTER_ENDPOINT(Poco::Net::HTTPRequest::HTTP_GET, "/api/tasks/" + GUID_REGEX_EXPRESSION + "/error?*", getResults)
+    REGISTER_ENDPOINT(Poco::Net::HTTPRequest::HTTP_GET, "/api/tasks/" + GUID_REGEX_EXPRESSION + "/result\?.*", getResults)
+    REGISTER_ENDPOINT(Poco::Net::HTTPRequest::HTTP_GET, "/api/tasks/" + GUID_REGEX_EXPRESSION + "/error\?.*", getResults)
 }
 
 void TasksController::getTask(Poco::Net::HTTPServerRequest& request, Poco::Net::HTTPServerResponse& response) {
+    (void)request;
 
-}
-
-void TasksController::removeTask(Poco::Net::HTTPServerRequest& request, Poco::Net::HTTPServerResponse& response) {
-    auto uriSegments = nikmon::stringUtils::split(request.getURI(), '/');
-    auto taskId = uriSegments[2];
-
-    _tasksManager->removeTask(taskId);
+    // TODO: need to implement this method
 
     handleHttpStatusCode(200, response);
-    std::ostream& outputStream = response.send();
-    outputStream.flush();
+    std::ostream& errorStream = response.send();
+    errorStream.flush();
 }
 
 void TasksController::removeTaskResults(Poco::Net::HTTPServerRequest& request, Poco::Net::HTTPServerResponse& response) {
@@ -47,6 +41,8 @@ void TasksController::removeTaskResults(Poco::Net::HTTPServerRequest& request, P
 void TasksController::getResults(Poco::Net::HTTPServerRequest& request, Poco::Net::HTTPServerResponse& response) {
     auto uriSegments = nikmon::stringUtils::split(request.getURI(), '/');
     auto taskId = uriSegments[2];
+
+    // TODO: need to extract from/to from request
     long from = 0;
     long to = 0;
 
@@ -68,6 +64,8 @@ void TasksController::getResults(Poco::Net::HTTPServerRequest& request, Poco::Ne
 void TasksController::getErrors(Poco::Net::HTTPServerRequest& request, Poco::Net::HTTPServerResponse& response) {
     auto uriSegments = nikmon::stringUtils::split(request.getURI(), '/');
     auto taskId = uriSegments[2];
+
+    // TODO: need to extract from/to from request
     long from = 0;
     long to = 0;
 

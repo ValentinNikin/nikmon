@@ -19,7 +19,7 @@ TEST(SQLiteTasksRepository, common) {
         auto tasksRepository = std::make_unique<SQLiteTasksRepository>("Tasks", session);
 
         {
-            auto tasks = tasksRepository->list("0f1ca827-2f4c-48b9-9c73-1baaa6ebd1c9");
+            auto tasks = tasksRepository->list("0f1ca827-2f4c-48b9-9c73-1baaa6ebd1c9", false);
             ASSERT_EQ(tasks.size(), 0);
         }
 
@@ -31,7 +31,7 @@ TEST(SQLiteTasksRepository, common) {
             task.delay = 1000;
             task.key = "System.Proc.Util";
             task.valueType = TaskValueType::uintType;
-            task.status = TaskStatus::Stopped;
+            task.isActive = false;
             ASSERT_TRUE(tasksRepository->insert(task));
         }
 
@@ -42,12 +42,12 @@ TEST(SQLiteTasksRepository, common) {
             task.frequency = TaskFrequency::OnceTime;
             task.key = "System.MachineInfo";
             task.valueType = TaskValueType::textType;
-            task.status = TaskStatus::Active;
+            task.isActive = true;
             ASSERT_TRUE(tasksRepository->insert(task));
         }
 
         {
-            auto tasks = tasksRepository->list("0f1ca827-2f4c-48b9-9c73-1baaa6ebd1c9");
+            auto tasks = tasksRepository->list("0f1ca827-2f4c-48b9-9c73-1baaa6ebd1c9", false);
             ASSERT_EQ(tasks.size(), 1);
 
             {
@@ -58,7 +58,7 @@ TEST(SQLiteTasksRepository, common) {
                 ASSERT_EQ(task->delay, 1000);
                 ASSERT_EQ(task->key, "System.Proc.Util");
                 ASSERT_EQ(task->valueType, TaskValueType::uintType);
-                ASSERT_EQ(task->status, TaskStatus::Stopped);
+                ASSERT_EQ(task->isActive, false);
             }
         }
 
@@ -69,12 +69,12 @@ TEST(SQLiteTasksRepository, common) {
             ASSERT_EQ(task->frequency, TaskFrequency::OnceTime);
             ASSERT_EQ(task->key, "System.MachineInfo");
             ASSERT_EQ(task->valueType, TaskValueType::textType);
-            ASSERT_EQ(task->status, TaskStatus::Active);
+            ASSERT_EQ(task->isActive, true);
         }
 
         {
             ASSERT_TRUE(tasksRepository->remove("454018d0-c1ea-11ed-a901-0800200c9a66"));
-            ASSERT_EQ(tasksRepository->list("4c9f4dd0-c1ea-11ed-a901-0800200c9a66").size(), 0);
+            ASSERT_EQ(tasksRepository->list("4c9f4dd0-c1ea-11ed-a901-0800200c9a66", false).size(), 0);
         }
     }
     catch (const std::exception& exception) {

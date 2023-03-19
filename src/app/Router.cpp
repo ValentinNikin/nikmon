@@ -5,6 +5,7 @@
 
 #include "controllers/AgentsController.h"
 #include "controllers/AgentCommunicatorController.h"
+#include "controllers/TasksController.h"
 #include "controllers/ControllerAdapter.h"
 
 #define CREATE_CONTROLLER_IF_APPLICABLE(Controller) \
@@ -21,6 +22,7 @@ Poco::Net::HTTPRequestHandler* Router::createRequestHandler(const Poco::Net::HTT
 
     CREATE_CONTROLLER_IF_APPLICABLE(AgentsController)
     CREATE_CONTROLLER_IF_APPLICABLE(AgentCommunicatorController)
+    CREATE_CONTROLLER_IF_APPLICABLE(TasksController)
 
     return new ControllerAdapter(controller);
 }

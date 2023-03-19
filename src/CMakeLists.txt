@@ -28,7 +28,7 @@ add_library(
 
         core/IAgentsManager.h
         core/IAgentCommunicator.h
-        core/TasksManager.h
+        core/ITasksManager.h
         core/WorkflowManager.h
         core/WorkflowManager.cpp
         core/TasksManager.h
@@ -58,14 +58,19 @@ add_library(
         types/rest-api/TaskInfo.h
         types/rest-api/AgentInfo.h
 
-
         types/enums/AgentStatus.h
         types/enums/CommandType.h
         types/enums/TaskAction.h
         types/enums/TaskFrequency.h
         types/enums/TaskResultStatus.h
         types/enums/TaskStatus.h
+        types/enums/TaskState.h
         types/enums/TaskValueType.h
+
+        types/Agent.h
+        types/Agent.cpp
+        types/Task.h
+        types/Task.cpp
 
         core/database/types/AgentDB.h
         core/database/types/TaskDB.h
@@ -89,7 +94,7 @@ add_library(
 
         utils/Utils.h
         utils/Utils.cpp
-        )
+)
 
 set_target_properties(
         ${LIBRARY_NAME} PROPERTIES

@@ -14,7 +14,7 @@ struct TaskItem {
     TaskResultStatus status;
     std::string errorMessage;
     std::string value;
-    long int time;
+    long time;
 };
 
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(TaskItem, id, status, errorMessage, value, time)
