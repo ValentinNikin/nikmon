@@ -11,14 +11,11 @@ list(APPEND PROJECT_DEPS ${Poco_LIBRARIES})
 find_package(Hypodermic REQUIRED)
 list(APPEND PROJECT_DEPS_INCLUDES ${Hypodermic_INCLUDE_DIRS})
 
+find_package(NlohmannJson REQUIRED)
+list(APPEND PROJECT_DEPS_INCLUDES ${NlohmannJson_INCLUDE_DIRS})
+
 find_package(Boost COMPONENTS program_options filesystem regex REQUIRED)
 
 list(APPEND PROJECT_DEPS_INCLUDES "${CMAKE_SOURCE_DIR}/3rdparty/")
-
-#get_cmake_property(_variableNames VARIABLES)
-#list (SORT _variableNames)
-#foreach (_variableName ${_variableNames})
-#    message(STATUS "${_variableName}=${${_variableName}}")
-#endforeach()
 
 list(APPEND PROJECT_DEPS ${CMAKE_THREAD_LIBS_INIT})

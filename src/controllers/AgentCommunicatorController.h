@@ -2,6 +2,8 @@
 
 #include <memory>
 
+#include <Poco/Logger.h>
+
 #include "Controller.h"
 
 #include "core/IAgentCommunicator.h"
@@ -14,4 +16,5 @@ private:
     void statusAgent(Poco::Net::HTTPServerRequest& request, Poco::Net::HTTPServerResponse& response);
 private:
     std::shared_ptr<IAgentCommunicator> _agentCommunicator;
+    Poco::Logger& _logger;
 };

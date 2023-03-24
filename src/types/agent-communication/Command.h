@@ -15,9 +15,9 @@ struct Payload {
     TaskFrequency frequency;
     long int delay;
     std::string key;
-
-    NLOHMANN_DEFINE_TYPE_INTRUSIVE(Payload, frequency, delay, key);
 };
+
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(Payload, frequency, delay, key)
 
 struct Command {
     std::string taskId;

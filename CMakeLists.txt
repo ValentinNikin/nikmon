@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.2 FATAL_ERROR)
-project(otus-cpp-hw-12)
+project(nikmon)
 
 option(BUILD_TESTS "Build unit-tests" OFF)
 

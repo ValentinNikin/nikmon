@@ -91,18 +91,18 @@ std::string SQLiteDatabaseManager::createAgent(const EditAgent& editAgent) {
     return agentDb.id;
 }
 
-void SQLiteDatabaseManager::saveTaskItems(const std::vector<TaskItem>& items) {
+void SQLiteDatabaseManager::saveTaskItems(const std::vector<std::unique_ptr<TaskItem>>& items) {
     for (const auto& item : items) {
-        if (item.status == TaskResultStatus::Error) {
+        if (item->status == TaskResultStatus::Error) {
             TaskItemErrorDB tieDB;
-            tieDB.taskId = item.id;
-            tieDB.time = item.time;
-            tieDB.message = item.errorMessage;
+            tieDB.taskId = item->id;
+            tieDB.time = item->time;
+            tieDB.message = item->errorMessage;
             _tasksItemsErrorsRepository->insert(tieDB);
             continue;
         }
 
-        auto taskDb = _tasksRepository->get(item.id);
+        auto taskDb = _tasksRepository->get(item->id);
         if (taskDb == nullptr) {
             // TODO: print something to log
             continue;
@@ -112,23 +112,23 @@ void SQLiteDatabaseManager::saveTaskItems(const std::vector<TaskItem>& items) {
 
         if (taskValueType == TaskValueType::uintType) {
             TaskItemDB<uint> tiDB;
-            tiDB.taskId = item.id;
-            tiDB.time = item.time;
-            tiDB.value = atoi(item.value.c_str());
+            tiDB.taskId = item->id;
+            tiDB.time = item->time;
+            tiDB.value = atoi(item->value.c_str());
             _tasksItemsRepositoryUint->insert(tiDB);
         }
         else if (taskValueType == TaskValueType::floatType) {
             TaskItemDB<float> tiDB;
-            tiDB.taskId = item.id;
-            tiDB.time = item.time;
-            tiDB.value = atof(item.value.c_str());
+            tiDB.taskId = item->id;
+            tiDB.time = item->time;
+            tiDB.value = atof(item->value.c_str());
             _tasksItemsRepositoryFloat->insert(tiDB);
         }
         else if (taskValueType == TaskValueType::textType) {
             TaskItemDB<std::string> tiDB;
-            tiDB.taskId = item.id;
-            tiDB.time = item.time;
-            tiDB.value = item.value;
+            tiDB.taskId = item->id;
+            tiDB.time = item->time;
+            tiDB.value = item->value;
             _tasksItemsRepositoryText->insert(tiDB);
         }
     }

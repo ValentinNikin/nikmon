@@ -33,6 +33,8 @@ add_library(
         core/WorkflowManager.cpp
         core/TasksManager.h
         core/TasksManager.cpp
+        core/ConfigurationManager.h
+        core/ConfigurationManager.cpp
 
         core/database/IDatabaseManager.h
         core/database/SQLiteDatabaseManager.h
@@ -44,6 +46,7 @@ add_library(
         types/agent-communication/RegistrationRequest.h
         types/agent-communication/RegistrationResponse.h
         types/agent-communication/StatusRequest.h
+        types/agent-communication/StatusRequest.cpp
         types/agent-communication/StatusResponse.h
         types/agent-communication/StatusResponse.cpp
         types/agent-communication/TaskItem.h

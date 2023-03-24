@@ -13,10 +13,11 @@ namespace types {
 struct StatusRequest {
     std::string id;
     std::vector<CommandConfirmation> confirmations;
-    std::vector<TaskItem> items;
+    std::vector<std::unique_ptr<TaskItem>> items;
 };
 
-NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(StatusRequest, id, confirmations, items)
+void to_json(nlohmann::json &j, const StatusRequest &r);
+void from_json(nlohmann::json &j, StatusRequest &r);
 
 }
 }

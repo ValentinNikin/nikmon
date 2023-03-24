@@ -10,6 +10,7 @@
 #include "core/database/SQLiteDatabaseManager.h"
 #include "core/ITasksManager.h"
 #include "core/TasksManager.h"
+#include "core/ConfigurationManager.h"
 
 std::unique_ptr<ServiceLocator> ServiceLocator::_instance = nullptr;
 
@@ -37,6 +38,8 @@ void ServiceLocator::init() {
             .singleInstance();
     builder.registerType<SQLiteDatabaseManager>()
             .as<IDatabaseManager>()
+            .singleInstance();
+    builder.registerType<ConfigurationManager>()
             .singleInstance();
 
     _container = builder.build();

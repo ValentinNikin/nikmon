@@ -26,7 +26,7 @@ public:
     virtual std::string createAgent(const nikmon::types::EditAgent&) = 0;
 
     /// Tasks items
-    virtual void saveTaskItems(const std::vector<nikmon::types::TaskItem>& items) = 0;
+    virtual void saveTaskItems(const std::vector<std::unique_ptr<nikmon::types::TaskItem>>& items) = 0;
 
     /// Tasks
     virtual std::string saveTask(const std::string& agentId, const nikmon::types::EditTask&) = 0;

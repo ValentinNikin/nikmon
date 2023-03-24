@@ -12,9 +12,11 @@ namespace types {
 struct CommandConfirmation {
     std::string taskId;
     CommandType type;
-
-    NLOHMANN_DEFINE_TYPE_INTRUSIVE(CommandConfirmation, taskId, type)
+    bool isConfirmed;
+    std::string errorMessage;
 };
+
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(CommandConfirmation, taskId, type, isConfirmed, errorMessage)
 
 }
 }
