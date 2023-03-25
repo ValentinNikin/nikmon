@@ -5,6 +5,10 @@
 #include <Poco/Net/HTTPServerRequest.h>
 #include <Poco/Net/HTTPServerResponse.h>
 #include <Poco/StreamCopier.h>
+#include <Poco/URI.h>
+
+Controller::Controller()
+    : _logger(Poco::Logger::get("Controller")) {}
 
 bool Controller::isApplicableForRequest(const Poco::Net::HTTPServerRequest& request) {
     std::size_t endpointIndex = SIZE_MAX;
@@ -18,6 +22,7 @@ void Controller::handleRequest(Poco::Net::HTTPServerRequest& request, Poco::Net:
             _endpoints[endpointIndex].handler(request, response);
         }
         catch (const std::exception& exception) {
+            _logger.error("Unable to process request. Error occured, what: %s", std::string(exception.what()));
             handleHttpStatusCode(500, response);
             std::ostream & outputStream = response.send();
             outputStream << toJson(exception);
@@ -127,4 +132,14 @@ nlohmann::json Controller::readPayloadFromRequest(Poco::Net::HTTPServerRequest& 
     Poco::StreamCopier::copyToString(inputStream, jsonPayload);
 
     return nlohmann::json::parse(jsonPayload);
+}
+
+std::map<std::string, std::string> Controller::getQueryParameters(const Poco::Net::HTTPServerRequest& request) {
+    std::map<std::string, std::string> parameters;
+
+    for (const auto& param : Poco::URI(request.getURI()).getQueryParameters()) {
+        parameters.emplace(param.first, param.second);
+    }
+
+    return parameters;
 }

@@ -45,13 +45,13 @@ void AgentCommunicatorController::statusAgent(Poco::Net::HTTPServerRequest& requ
     StatusRequest statusRequest;
     from_json(payload, statusRequest);
 
-    _logger.debug("'status' request from % agent", statusRequest.id);
+    _logger.debug("'status' request from %s agent", statusRequest.id);
 
     auto statusResponse = _agentCommunicator->statusAgent(statusRequest);
     nlohmann::json responseJson;
     to_json(responseJson, statusResponse);
 
-    _logger.debug("'status' request from % agent handled", statusRequest.id);
+    _logger.debug("'status' request from %s agent handled", statusRequest.id);
 
     handleHttpStatusCode(200, response);
     std::ostream &outputStream = response.send();

@@ -5,16 +5,19 @@
 #include <functional>
 #include <regex>
 #include <memory>
+#include <map>
 
 #include <nlohmann-json/json.hpp>
 
 #include <Poco/Net/HTTPRequestHandler.h>
+#include <Poco/Logger.h>
 
 #define REGISTER_ENDPOINT(method, route, handler) \
 _endpoints.emplace_back(method, route, [this](Poco::Net::HTTPServerRequest& request, Poco::Net::HTTPServerResponse& response) { return handler(request, response); }); \
 
 class Controller : public Poco::Net::HTTPRequestHandler {
 public:
+    Controller();
     virtual ~Controller() = default;
     /**
      * Determine that controller instance is applicable to handle request
@@ -28,6 +31,7 @@ protected:
     void handleHttpStatusCode(int statusCode, Poco::Net::HTTPServerResponse& response);
     std::string toJson(const std::exception& exception);
     nlohmann::json readPayloadFromRequest(Poco::Net::HTTPServerRequest& request);
+    std::map<std::string, std::string> getQueryParameters(const Poco::Net::HTTPServerRequest& request);
 
     struct EndpointConf {
         std::string method;
@@ -44,4 +48,5 @@ protected:
     std::vector<EndpointConf> _endpoints;
 private:
     bool tryToFindEndpointForRequest(const Poco::Net::HTTPServerRequest& request, std::size_t& endPointIndex);
+    Poco::Logger& _logger;
 };

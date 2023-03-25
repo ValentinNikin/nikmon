@@ -21,7 +21,7 @@ std::vector<std::unique_ptr<TaskDB>> SQLiteTasksRepository::list(const std::stri
         (_session << "SELECT Id, AgentId, Frequency, Delay, Key, Type, IsActive FROM %s WHERE AgentId = ? %s",
                 into(task.id), into(task.agentId), into(frequency), into(task.delay),
                 into(task.key), into(valueType), into(task.isActive),
-                _tableName, use(agentId_), onlyActiveCondition);
+                _tableName, use(agentId_), onlyActiveCondition, range(0, 1));
 
     while (!statement.done() && statement.execute()) {
         task.frequency = static_cast<TaskFrequency>(frequency);
@@ -35,11 +35,13 @@ std::vector<std::unique_ptr<TaskDB>> SQLiteTasksRepository::list(const std::stri
 bool SQLiteTasksRepository::insert(TaskDB& task) {
     int frequency = static_cast<int>(task.frequency);
     int valueType = static_cast<int>(task.valueType);
+    int isActive = task.isActive ? 1 : 0;
+
     Poco::Data::Statement statement =
             (_session << "INSERT INTO %s VALUES(?, ?, ?, ?, ?, ?, ?)",
                     _tableName,
                     use(task.id), use(task.agentId), use(frequency), use(task.delay),
-                    use(task.key), use(valueType), use(task.isActive));
+                    use(task.key), use(valueType), use(isActive));
     return statement.execute() != 0;
 }
 
@@ -70,17 +72,18 @@ std::unique_ptr<TaskDB> SQLiteTasksRepository::get(const std::string& taskId) {
 bool SQLiteTasksRepository::update(TaskDB& task) {
     int frequency = static_cast<int>(task.frequency);
     int valueType = static_cast<int>(task.valueType);
+    int isActive = task.isActive ? 1 : 0;
 
     Poco::Data::Statement statement =
             (_session << "UPDATE %s SET AgentId = ?, Frequency = ?, Delay = ?, Key = ?, Type = ?, IsActive = ? WHERE Id = ?",
-                    _tableName, use(task.agentId), use(frequency), use(task.delay), use(task.key), use(valueType), use(task.isActive),
+                    _tableName, use(task.agentId), use(frequency), use(task.delay), use(task.key), use(valueType), use(isActive),
                     use(task.id));
     return statement.execute() != 0;
 }
 
 bool SQLiteTasksRepository::toggleState(const std::string& taskId, const bool isActive) {
     std::string taskId_ = taskId;
-    bool isActive_ = isActive;
+    int isActive_ = isActive ? 1 : 0;
 
     Poco::Data::Statement statement =
             (_session << "UPDATE %s SET IsActive = ? WHERE Id = ?", _tableName, use(isActive_), use(taskId_));

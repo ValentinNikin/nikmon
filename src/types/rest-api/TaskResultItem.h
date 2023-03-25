@@ -15,7 +15,7 @@ struct TaskResultItem {
     std::string value;
     unsigned long time;
 
-    TaskResultItem(const TaskItemDB<uint>& item) {
+    TaskResultItem(const TaskItemDB<long>& item) {
         taskId = item.taskId;
         value = std::to_string(item.value);
         time = item.time;

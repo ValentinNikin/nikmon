@@ -16,7 +16,7 @@ TEST(SQLiteTasksItemsRepository, uint) {
         Poco::Data::SQLite::Connector::registerConnector();
         Poco::Data::Session session("SQLite", dbPath);
 
-        auto tasksItemsRepository = std::make_unique<SQLiteTasksItemsRepository<uint>>("TasksItems_uint", session);
+        auto tasksItemsRepository = std::make_unique<SQLiteTasksItemsRepository<uint>>("TasksItems_long", session);
 
         {
             auto items = tasksItemsRepository->list("454018d0-c1ea-11ed-a901-0800200c9a66");

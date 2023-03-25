@@ -7,11 +7,13 @@ TasksManager::TasksManager(const std::shared_ptr<IDatabaseManager>& databaseMana
 
 std::unique_ptr<TaskInfo> TasksManager::getTask(const std::string& taskId) {
     (void)taskId;
+    // TODO: need to implement this method
     return nullptr;
 }
 
 void TasksManager::removeTask(const std::string& taskId) {
     (void)taskId;
+    // TODO: need to implement this method
 }
 
 void TasksManager::removeTaskResults(const std::string& taskId) {

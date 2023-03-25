@@ -31,7 +31,7 @@ public:
 private:
     std::unique_ptr<IAgentsRepository> _agentsRepository;
     std::unique_ptr<ITasksRepository> _tasksRepository;
-    std::unique_ptr<ITasksItemsRepository<uint>> _tasksItemsRepositoryUint;
+    std::unique_ptr<ITasksItemsRepository<long>> _tasksItemsRepositoryUint;
     std::unique_ptr<ITasksItemsRepository<float>> _tasksItemsRepositoryFloat;
     std::unique_ptr<ITasksItemsRepository<std::string>> _tasksItemsRepositoryText;
     std::unique_ptr<ITasksItemsErrorsRepository> _tasksItemsErrorsRepository;

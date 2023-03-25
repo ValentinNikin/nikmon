@@ -35,9 +35,8 @@ RegistrationResponse WorkflowManager::registerAgent(const RegistrationRequest& r
     else {
         auto newAgent = std::make_unique<Agent>(agentDb.get());
         newAgent->init(_databaseManager->getTasks(newAgent->id, true));
-        addAgent(std::move(newAgent));
-
         agent = newAgent.get();
+        addAgent(std::move(newAgent));
     }
 
     RegistrationResponse registrationResponse;

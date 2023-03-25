@@ -17,7 +17,7 @@ using namespace nikmon::types;
 
 #define TABLE_AGENTS "Agents"
 #define TABLE_TASKS "Tasks"
-#define TABLE_TASKS_ITEMS_uint "TasksItems_uint"
+#define TABLE_TASKS_ITEMS_long "TasksItems_long"
 #define TABLE_TASKS_ITEMS_float "TasksItems_float"
 #define TABLE_TASKS_ITEMS_text "TasksItems_text"
 #define TABLE_TASKS_ITEMS_errors "TasksItems_errors"
@@ -39,8 +39,8 @@ void createDatabaseIfNotExist(const std::string& path) {
                 "[Frequency] int NOT NULL, [Delay] int, [Key] nvarchar NOT NULL, [Type] int NOT NULL, [IsActive] boolean NOT NULL, "
                 "FOREIGN KEY (AgentId) REFERENCES Agents(Id))", TABLE_TASKS, now;
 
-    session << "CREATE TABLE %s ([TaskId] blob NOT NULL, [Time] int NOT NULL, [Value] int, "
-               "FOREIGN KEY (TaskId) REFERENCES Tasks(Id))", TABLE_TASKS_ITEMS_uint, now;
+    session << "CREATE TABLE %s ([TaskId] blob NOT NULL, [Time] int NOT NULL, [Value] BIGINT, "
+               "FOREIGN KEY (TaskId) REFERENCES Tasks(Id))", TABLE_TASKS_ITEMS_long, now;
 
     session << "CREATE TABLE %s ([TaskId] blob NOT NULL, [Time] int NOT NULL, [Value] float, "
                "FOREIGN KEY (TaskId) REFERENCES Tasks(Id))", TABLE_TASKS_ITEMS_float, now;
@@ -64,7 +64,7 @@ SQLiteDatabaseManager::SQLiteDatabaseManager() {
 
     _agentsRepository = std::make_unique<SQLiteAgentsRepository>(TABLE_AGENTS, session);
     _tasksRepository = std::make_unique<SQLiteTasksRepository>(TABLE_TASKS, session);
-    _tasksItemsRepositoryUint = std::make_unique<SQLiteTasksItemsRepository<uint>>(TABLE_TASKS_ITEMS_uint, session);
+    _tasksItemsRepositoryUint = std::make_unique<SQLiteTasksItemsRepository<long>>(TABLE_TASKS_ITEMS_long, session);
     _tasksItemsRepositoryFloat = std::make_unique<SQLiteTasksItemsRepository<float>>(TABLE_TASKS_ITEMS_float, session);
     _tasksItemsRepositoryText = std::make_unique<SQLiteTasksItemsRepository<std::string>>(TABLE_TASKS_ITEMS_text, session);
     _tasksItemsErrorsRepository = std::make_unique<SQLiteTasksItemsErrorsRepository>(TABLE_TASKS_ITEMS_errors, session);
@@ -111,10 +111,10 @@ void SQLiteDatabaseManager::saveTaskItems(const std::vector<std::unique_ptr<Task
         auto taskValueType = taskDb->valueType;
 
         if (taskValueType == TaskValueType::uintType) {
-            TaskItemDB<uint> tiDB;
+            TaskItemDB<long> tiDB;
             tiDB.taskId = item->id;
             tiDB.time = item->time;
-            tiDB.value = atoi(item->value.c_str());
+            tiDB.value = atoll(item->value.c_str());
             _tasksItemsRepositoryUint->insert(tiDB);
         }
         else if (taskValueType == TaskValueType::floatType) {

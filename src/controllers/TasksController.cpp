@@ -42,9 +42,16 @@ void TasksController::getResults(Poco::Net::HTTPServerRequest& request, Poco::Ne
     auto uriSegments = nikmon::stringUtils::split(request.getURI(), '/');
     auto taskId = uriSegments[2];
 
-    // TODO: need to extract from/to from request
-    long from = 0;
-    long to = 0;
+    auto params = getQueryParameters(request);
+    if (params.find("from") == params.end()) {
+        throw std::runtime_error("You should specify \"from\" param");
+    }
+    if (params.find("to") == params.end()) {
+        throw std::runtime_error("You should specify \"to\" param");
+    }
+
+    long from = atol(params.at("from").c_str());
+    long to = atol(params.at("to").c_str());
 
     auto resultItems = _tasksManager->getResults(taskId, from, to);
 
@@ -65,9 +72,16 @@ void TasksController::getErrors(Poco::Net::HTTPServerRequest& request, Poco::Net
     auto uriSegments = nikmon::stringUtils::split(request.getURI(), '/');
     auto taskId = uriSegments[2];
 
-    // TODO: need to extract from/to from request
-    long from = 0;
-    long to = 0;
+    auto params = getQueryParameters(request);
+    if (params.find("from") == params.end()) {
+        throw std::runtime_error("You should specify \"from\" param");
+    }
+    if (params.find("to") == params.end()) {
+        throw std::runtime_error("You should specify \"to\" param");
+    }
+
+    long from = atol(params.at("from").c_str());
+    long to = atol(params.at("to").c_str());
 
     auto errorItems = _tasksManager->getErrors(taskId, from, to);
 
