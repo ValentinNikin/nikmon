@@ -24,7 +24,8 @@ using namespace nikmon::types;
 
 #define SQLITE_CONNECTOR "SQLite"
 
-void createDatabaseIfNotExist(const std::string& path) {
+namespace {
+void createDatabaseIfNotExist(const std::string &path) {
     Poco::File file(path);
     if (file.exists()) {
         return;
@@ -33,11 +34,11 @@ void createDatabaseIfNotExist(const std::string& path) {
     Poco::Data::Session session(SQLITE_CONNECTOR, path);
 
     session << "CREATE TABLE %s ([Id] blob NOT NULL PRIMARY KEY, [MachineName] nvarchar NOT NULL, "
-               "[Ip] nvarchar NOT NULL, [Heartbeat] int NOT NULL, [Info] text)", TABLE_AGENTS, now;
+               "[Ip] nvarchar NOT NULL, [Heartbeat] int NOT NULL, [Info] text, UNIQUE(MachineName, Ip))", TABLE_AGENTS, now;
 
     session << "CREATE TABLE %s ([Id] blob NOT NULL PRIMARY KEY, [AgentId] blob NOT NULL, "
-                "[Frequency] int NOT NULL, [Delay] int, [Key] nvarchar NOT NULL, [Type] int NOT NULL, [IsActive] boolean NOT NULL, "
-                "FOREIGN KEY (AgentId) REFERENCES Agents(Id))", TABLE_TASKS, now;
+               "[Frequency] int NOT NULL, [Delay] int, [Key] nvarchar NOT NULL, [Type] int NOT NULL, [IsActive] boolean NOT NULL, "
+               "FOREIGN KEY (AgentId) REFERENCES Agents(Id))", TABLE_TASKS, now;
 
     session << "CREATE TABLE %s ([TaskId] blob NOT NULL, [Time] int NOT NULL, [Value] BIGINT, "
                "FOREIGN KEY (TaskId) REFERENCES Tasks(Id))", TABLE_TASKS_ITEMS_long, now;
@@ -51,16 +52,23 @@ void createDatabaseIfNotExist(const std::string& path) {
     session << "CREATE TABLE %s ([TaskId] blob NOT NULL, [Time] int NOT NULL, [Message] text, "
                "FOREIGN KEY (TaskId) REFERENCES Tasks(Id))", TABLE_TASKS_ITEMS_errors, now;
 }
+}
 
-SQLiteDatabaseManager::SQLiteDatabaseManager() {
-    // TODO: extract parameter from config file
-    std::string path = "nikmon.db";
-//    std::remove(path.c_str());
+SQLiteDatabaseManager::SQLiteDatabaseManager(const std::shared_ptr<ConfigurationManager>& configurationManager)
+    : _logger(Poco::Logger::get("SQLiteDatabaseManager")) {
+
+    std::string databasePath = "./nikmon.db";
+    if (configurationManager->hasKey("DatabasePath")) {
+        databasePath = configurationManager->getString("DatabasePath");
+    }
+    else {
+        _logger.warning("Unable to extract 'DatabasePath' from config. Default value '%s' will be used", databasePath);
+    }
 
     Poco::Data::SQLite::Connector::registerConnector();
-    createDatabaseIfNotExist(path);
+    createDatabaseIfNotExist(databasePath);
 
-    Poco::Data::Session session(SQLITE_CONNECTOR, path);
+    Poco::Data::Session session(SQLITE_CONNECTOR, databasePath);
 
     _agentsRepository = std::make_unique<SQLiteAgentsRepository>(TABLE_AGENTS, session);
     _tasksRepository = std::make_unique<SQLiteTasksRepository>(TABLE_TASKS, session);
@@ -104,13 +112,13 @@ void SQLiteDatabaseManager::saveTaskItems(const std::vector<std::unique_ptr<Task
 
         auto taskDb = _tasksRepository->get(item->id);
         if (taskDb == nullptr) {
-            // TODO: print something to log
+            _logger.warning("Unable to save results from agent. Task with id '%s' not found", item->id);
             continue;
         }
 
         auto taskValueType = taskDb->valueType;
 
-        if (taskValueType == TaskValueType::uintType) {
+        if (taskValueType == TaskValueType::longlongType) {
             TaskItemDB<long> tiDB;
             tiDB.taskId = item->id;
             tiDB.time = item->time;
@@ -130,6 +138,10 @@ void SQLiteDatabaseManager::saveTaskItems(const std::vector<std::unique_ptr<Task
             tiDB.time = item->time;
             tiDB.value = item->value;
             _tasksItemsRepositoryText->insert(tiDB);
+        }
+        else {
+            _logger.error("Unsupported task result type %d", static_cast<int>(taskValueType));
+            assert(0 && "Unsupported task result type");
         }
     }
 }
@@ -200,7 +212,7 @@ std::vector<std::unique_ptr<TaskResultItem>> SQLiteDatabaseManager::getResults(
 
     std::vector<std::unique_ptr<TaskResultItem>> results;
 
-    if (taskDb->valueType == TaskValueType::uintType) {
+    if (taskDb->valueType == TaskValueType::longlongType) {
         for (const auto& i : _tasksItemsRepositoryUint->list(taskId, from, to)) {
             results.push_back(std::make_unique<TaskResultItem>(*i));
         }

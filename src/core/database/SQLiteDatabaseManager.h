@@ -1,6 +1,10 @@
 #pragma once
 
+#include <Poco/Logger.h>
+
 #include "IDatabaseManager.h"
+
+#include "core/ConfigurationManager.h"
 
 #include "core/database/repositories/ITasksItemsRepository.h"
 #include "core/database/repositories/IAgentsRepository.h"
@@ -11,7 +15,7 @@
 
 class SQLiteDatabaseManager : public IDatabaseManager {
 public:
-    SQLiteDatabaseManager();
+    SQLiteDatabaseManager(const std::shared_ptr<ConfigurationManager>& configurationManager);
 
     std::vector<std::unique_ptr<AgentDB>> getAgents() override;
     std::vector<std::unique_ptr<AgentDB>> getAgentsByIpAndMachineName(const std::string ip, const std::string& machineName) override;
@@ -35,4 +39,6 @@ private:
     std::unique_ptr<ITasksItemsRepository<float>> _tasksItemsRepositoryFloat;
     std::unique_ptr<ITasksItemsRepository<std::string>> _tasksItemsRepositoryText;
     std::unique_ptr<ITasksItemsErrorsRepository> _tasksItemsErrorsRepository;
+
+    Poco::Logger& _logger;
 };

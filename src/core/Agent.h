@@ -12,22 +12,19 @@
 #include "types/agent-communication/Command.h"
 #include "types/agent-communication/CommandConfirmation.h"
 #include "types/agent-communication/StatusResponse.h"
+#include "types/agent-communication/RegistrationResponse.h"
 
 namespace nikmon {
 namespace types {
 
 struct Agent {
 public:
-    std::string id;
-    std::string machineName;
-    std::string ip;
-    int heartbeat;
+    std::string getId() const;
+    int getHeartbeat() const;
 public:
     Agent(const AgentDB* agent);
 
-    /**
-     * Initialize agent with task list
-     */
+    /// Initialize agent with task list
     void init(const std::vector<std::unique_ptr<TaskDB>>& tasks);
 
     /**
@@ -36,32 +33,25 @@ public:
      */
     void reset();
 
-    /**
-     * Prepares response for the agent "status" request
-     */
+    /// Prepares response for the agent "status" request
     StatusResponse prepareStatusResponse(const std::vector<CommandConfirmation>&);
 
-    /**
-     * Assign task to agent
-     */
+    /// Assign task
     void assignTask(const TaskDB&);
 
-    /**
-     * Edit task to agent
-     */
+    /// Edit task
     void editTask(const EditTask&);
 
-    /**
-     * Cancel task to agent
-     */
+    /// Cancel task
     bool cancelTask(const std::string& taskId);
 
-    /**
-     * Get task by task id
-     */
+    /// Get task by task id
     Task* getTask(const std::string& taskId);
 
 private:
+    std::string _id;
+    int _heartbeat;
+
     std::vector<std::unique_ptr<Command>> prepareCommandsList();
 
     std::recursive_mutex _mutex;

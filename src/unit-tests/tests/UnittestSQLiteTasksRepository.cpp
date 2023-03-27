@@ -30,7 +30,7 @@ TEST(SQLiteTasksRepository, common) {
             task.frequency = TaskFrequency::MultipleTimes;
             task.delay = 1000;
             task.key = "System.Proc.Util";
-            task.valueType = TaskValueType::uintType;
+            task.valueType = TaskValueType::longlongType;
             task.isActive = false;
             ASSERT_TRUE(tasksRepository->insert(task));
         }
@@ -57,7 +57,7 @@ TEST(SQLiteTasksRepository, common) {
                 ASSERT_EQ(task->frequency, TaskFrequency::MultipleTimes);
                 ASSERT_EQ(task->delay, 1000);
                 ASSERT_EQ(task->key, "System.Proc.Util");
-                ASSERT_EQ(task->valueType, TaskValueType::uintType);
+                ASSERT_EQ(task->valueType, TaskValueType::longlongType);
                 ASSERT_EQ(task->isActive, false);
             }
         }

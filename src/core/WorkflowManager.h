@@ -4,12 +4,14 @@
 #include <mutex>
 #include <memory>
 
+#include <Poco/Logger.h>
+
 #include "IAgentCommunicator.h"
 #include "IAgentsManager.h"
 
 #include "core/database/IDatabaseManager.h"
 
-#include "types/Agent.h"
+#include "Agent.h"
 #include "types/rest-api/EditTask.h"
 
 class WorkflowManager : public IAgentCommunicator, public IAgentsManager {
@@ -31,14 +33,12 @@ public:
 
 private:
     std::shared_ptr<IDatabaseManager> _databaseManager;
-
-
+private:
     using AgentsList = std::vector<std::unique_ptr<nikmon::types::Agent>>;
     std::mutex _mutex;
     AgentsList _agents;
     nikmon::types::Agent* findAgent(const std::string& id);
     void addAgent(std::unique_ptr<nikmon::types::Agent>);
-
-
-//    ThreadSafeCollection<nikmon::types::Agent> _agents;
+private:
+    Poco::Logger& _logger;
 };

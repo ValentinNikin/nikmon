@@ -3,7 +3,7 @@
 #include <stdint.h>
 
 enum class TaskValueType : uint8_t {
-    uintType = 0,
+    longlongType = 0,
     floatType,
     textType
 };

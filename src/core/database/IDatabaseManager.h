@@ -13,7 +13,7 @@
 #include "types/rest-api/EditAgent.h"
 #include "types/rest-api/TaskResultItem.h"
 #include "types/rest-api/TaskErrorItem.h"
-#include "types/Task.h"
+#include "core/Task.h"
 
 class IDatabaseManager {
 public:

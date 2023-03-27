@@ -71,10 +71,10 @@ add_library(
         types/enums/TaskState.h
         types/enums/TaskValueType.h
 
-        types/Agent.h
-        types/Agent.cpp
-        types/Task.h
-        types/Task.cpp
+        core/Agent.h
+        core/Agent.cpp
+        core/Task.h
+        core/Task.cpp
 
         core/database/types/AgentDB.h
         core/database/types/TaskDB.h

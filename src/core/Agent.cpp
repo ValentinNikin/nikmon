@@ -3,10 +3,15 @@
 using namespace nikmon::types;
 
 Agent::Agent(const AgentDB* agent)
-    : id(agent->id),
-      machineName(agent->machineName),
-      ip(agent->ip),
-      heartbeat(agent->heartbeat) {}
+    : _id(agent->id), _heartbeat(agent->heartbeat) {}
+
+std::string Agent::getId() const {
+    return _id;
+}
+
+int Agent::getHeartbeat() const {
+    return _heartbeat;
+}
 
 void Agent::init(const std::vector<std::unique_ptr<TaskDB>>& tasks) {
     std::lock_guard<std::recursive_mutex> lg(_mutex);
@@ -40,7 +45,7 @@ StatusResponse Agent::prepareStatusResponse(const std::vector<CommandConfirmatio
 
     StatusResponse statusResponse;
 
-    statusResponse.heartbeat = heartbeat;
+    statusResponse.heartbeat = _heartbeat;
     statusResponse.commands = prepareCommandsList();
 
     return statusResponse;

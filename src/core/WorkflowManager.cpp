@@ -2,15 +2,14 @@
 
 #include <algorithm>
 
-#include "types/Task.h"
-#include "types/enums/TaskResultStatus.h"
-#include "types/enums/CommandType.h"
+#include "Task.h"
 
 using namespace nikmon::types;
 
 WorkflowManager::WorkflowManager(
         const std::shared_ptr<IDatabaseManager>& databaseManager)
-        : _databaseManager(databaseManager) {}
+        : _databaseManager(databaseManager),
+        _logger(Poco::Logger::get("WorkflowManager")) {}
 
 RegistrationResponse WorkflowManager::registerAgent(const RegistrationRequest& registrationRequest) {
 
@@ -21,7 +20,9 @@ RegistrationResponse WorkflowManager::registerAgent(const RegistrationRequest& r
     }
 
     if (agentsDb.size() > 1) {
-        // TODO: print something to log, this is wrong situation
+        _logger.warning("In the database found more than one agent with equals 'ip' and 'machine name' ('%s', '%s'). "
+                        "The first one will be taken.",
+                        registrationRequest.ip, registrationRequest.machineName);
     }
 
     const auto& agentDb = agentsDb[0];
@@ -34,15 +35,15 @@ RegistrationResponse WorkflowManager::registerAgent(const RegistrationRequest& r
     }
     else {
         auto newAgent = std::make_unique<Agent>(agentDb.get());
-        newAgent->init(_databaseManager->getTasks(newAgent->id, true));
+        newAgent->init(_databaseManager->getTasks(newAgent->getId(), true));
         agent = newAgent.get();
         addAgent(std::move(newAgent));
     }
 
     RegistrationResponse registrationResponse;
 
-    registrationResponse.id = agent->id;
-    registrationResponse.heartbeat = agent->heartbeat;
+    registrationResponse.id = agent->getId();
+    registrationResponse.heartbeat = agent->getHeartbeat();
 
     return registrationResponse;
 }
@@ -151,7 +152,7 @@ void WorkflowManager::toggleTask(const std::string& agentId, const std::string& 
     auto newState = !taskDb->isActive;
 
     _databaseManager->toggleTask(taskId, newState);
-    if (agent != nullptr && taskDb->agentId == agent->id && newState) {
+    if (agent != nullptr && taskDb->agentId == agent->getId() && newState) {
         agent->assignTask(*taskDb);
     }
 }
@@ -160,7 +161,7 @@ nikmon::types::Agent* WorkflowManager::findAgent(const std::string& id) {
     std::lock_guard<std::mutex> lg(_mutex);
 
     auto existAgentIt = std::find_if(_agents.cbegin(), _agents.cend(), [&id](const auto& agent) {
-        return agent->id == id;
+        return agent->getId() == id;
     });
 
     if (existAgentIt == _agents.cend()) {
